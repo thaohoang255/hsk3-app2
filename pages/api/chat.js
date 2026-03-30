@@ -5,27 +5,31 @@ export default async function handler(req, res) {
   const prompt = messages?.[0]?.content || "";
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            maxOutputTokens: max_tokens,
-            temperature: 0.7,
-          },
-        }),
-      }
-    );
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: max_tokens,
+          temperature: 0.7,
+        },
+      }),
+    });
 
     const data = await response.json();
-    console.log("Gemini raw response:", JSON.stringify(data).slice(0, 300));
+    // Log toàn bộ response để debug
+    console.log("STATUS:", response.status);
+    console.log("FULL RESPONSE:", JSON.stringify(data));
+    
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log("EXTRACTED TEXT:", text ? "OK" : "EMPTY");
+    
     res.status(200).json({ content: [{ text }] });
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ error: "API error" });
+    console.error("FETCH ERROR:", err.message);
+    res.status(500).json({ error: err.message });
   }
 }
