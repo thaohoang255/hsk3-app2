@@ -45,7 +45,7 @@ const W = [
   {h:"选择",p:"xuǎnzé",m:"lựa chọn",c:"Động từ"},{h:"注意",p:"zhùyì",m:"chú ý",c:"Động từ"},
   {h:"准备",p:"zhǔnbèi",m:"chuẩn bị",c:"Động từ"},{h:"迟到",p:"chídào",m:"đến muộn",c:"Động từ"},
   {h:"成功",p:"chénggōng",m:"thành công",c:"Động từ"},{h:"提高",p:"tígāo",m:"nâng cao",c:"Động từ"},
-  {h:"同意",p:"tóngyì",m:"đồng ý",c:"动词"},{h:"坚持",p:"jiānchí",m:"kiên trì",c:"Động từ"},
+  {h:"同意",p:"tóngyì",m:"đồng ý",c:"Động từ"},{h:"坚持",p:"jiānchí",m:"kiên trì",c:"Động từ"},
   {h:"联系",p:"liánxì",m:"liên lạc",c:"Động từ"},{h:"讨论",p:"tǎolùn",m:"thảo luận",c:"Động từ"},
   {h:"支持",p:"zhīchí",m:"ủng hộ",c:"Động từ"},{h:"游泳",p:"yóuyǒng",m:"bơi lội",c:"Động từ"},
   {h:"聪明",p:"cōngming",m:"thông minh",c:"Tính từ"},{h:"方便",p:"fāngbiàn",m:"thuận tiện",c:"Tính từ"},
@@ -66,10 +66,10 @@ const W = [
   {h:"关于",p:"guānyú",m:"về, liên quan đến",c:"Giới từ"},{h:"为了",p:"wèile",m:"vì (mục đích)",c:"Giới từ"},
 ];
 
+// ── UTILS ────────────────────────────────────────────────────
 const shuffle = a => [...a].sort(() => Math.random() - 0.5);
 const getWrong = (w, all) => shuffle(all.filter(x => x.h !== w.h)).slice(0, 3);
 const CATS = ["Tất cả", ...Array.from(new Set(W.map(w => w.c)))];
-
 const TONES = [
   {t:"1",mark:"ˉ",bg:"#dbeafe",fg:"#1d4ed8",label:"Thanh 1 — ngang cao"},
   {t:"2",mark:"ˊ",bg:"#dcfce7",fg:"#15803d",label:"Thanh 2 — lên"},
@@ -98,20 +98,73 @@ const normPin = s => s.toLowerCase()
   .replace(/[ōóǒò]/g,"o").replace(/[ūúǔù]/g,"u").replace(/[ǖǘǚǜ]/g,"u")
   .replace(/[-\s]/g,"");
 
+// ── SPACED REPETITION ────────────────────────────────────────
+const loadProg = () => { try { return JSON.parse(localStorage.getItem("hsk3_prog") || "{}"); } catch { return {}; } };
+const saveProg = p => { try { localStorage.setItem("hsk3_prog", JSON.stringify(p)); } catch {} };
+const updateProg = (prog, hanzi, correct) => {
+  const cur = prog[hanzi] || { score: 0, seen: 0, correct: 0 };
+  return { ...prog, [hanzi]: { score: correct ? Math.min(cur.score+1,10) : Math.max(cur.score-1,0), seen: cur.seen+1, correct: cur.correct+(correct?1:0) } };
+};
+const weightedPick = (words, prog) => {
+  const weights = words.map(w => {
+    const s = prog[w.h] ? prog[w.h].score : -1;
+    if (s < 0) return 10;
+    if (s <= 2) return 8;
+    if (s <= 5) return 4;
+    return 1;
+  });
+  const total = weights.reduce((a,b) => a+b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < words.length; i++) { r -= weights[i]; if (r <= 0) return i; }
+  return words.length - 1;
+};
+const getStats = (words, prog) => ({
+  mastered: words.filter(w => (prog[w.h] ? prog[w.h].score : -1) >= 6).length,
+  learning: words.filter(w => { const s = prog[w.h] ? prog[w.h].score : -1; return s >= 0 && s < 6; }).length,
+  unseen:   words.filter(w => !(prog[w.h])).length,
+});
+const getProgLabel = (prog, h) => {
+  if (!prog[h]) return { label:"🆕 Chưa học", color:"#6b7280" };
+  const s = prog[h].score;
+  if (s >= 6) return { label:"✅ Đã thuộc", color:"#15803d" };
+  if (s >= 3) return { label:"📖 Đang học", color:"#d97706" };
+  return { label:"❌ Cần ôn", color:"#dc2626" };
+};
+
+async function callAI(prompt) {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 1000
+    })
+  });
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+// ── APP ──────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("flashcard");
   const [weak, setWeak] = useState([]);
   const [streak, setStreak] = useState(0);
   const [cat, setCat] = useState("Tất cả");
+  const [prog, setProg] = useState(() => loadProg());
   const words = cat === "Tất cả" ? W : W.filter(w => w.c === cat);
-  const markWeak = (w, note="") => setWeak(p => p.find(x => x.h===w.h) ? p : [...p, {...w, note}]);
+  const markWeak = (w, note="") => setWeak(p => p.find(x=>x.h===w.h) ? p : [...p,{...w,note}]);
   const unmarkWeak = h => setWeak(p => p.filter(w => w.h !== h));
+  const recordAnswer = (hanzi, correct) => {
+    const np = updateProg(prog, hanzi, correct);
+    setProg(np); saveProg(np);
+  };
+  const stats = getStats(words, prog);
 
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#fff1f0,#fffbe6)",display:"flex",alignItems:"center",justifyContent:"center",padding:"12px"}}>
       <div style={{background:"white",borderRadius:"24px",boxShadow:"0 8px 32px rgba(0,0,0,0.12)",width:"100%",maxWidth:"420px",overflow:"hidden"}}>
         <div style={{background:"linear-gradient(90deg,#ef4444,#b91c1c)",padding:"16px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"6px"}}>
             <div>
               <div style={{color:"white",fontWeight:"bold",fontSize:"15px"}}>🇨🇳 HSK3 — {W.length} từ</div>
               <div style={{color:"#fca5a5",fontSize:"11px"}}>{words.length} từ đang lọc</div>
@@ -119,6 +172,18 @@ export default function App() {
             <div style={{display:"flex",gap:"6px"}}>
               <span style={{background:"#fbbf24",color:"#7c2d12",padding:"2px 10px",borderRadius:"999px",fontSize:"12px",fontWeight:"bold"}}>🔥{streak}</span>
               <span style={{background:"#fca5a5",color:"white",padding:"2px 10px",borderRadius:"999px",fontSize:"12px",fontWeight:"bold"}}>⚑{weak.length}</span>
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div style={{marginBottom:"8px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:"10px",color:"#fca5a5",marginBottom:"3px"}}>
+              <span>🆕 {stats.unseen} chưa học</span>
+              <span>📖 {stats.learning} đang học</span>
+              <span>✅ {stats.mastered} đã thuộc</span>
+            </div>
+            <div style={{display:"flex",height:"6px",borderRadius:"999px",overflow:"hidden",background:"rgba(255,255,255,0.2)"}}>
+              <div style={{width:`${(stats.mastered/words.length)*100}%`,background:"#4ade80",transition:"width 0.5s"}}/>
+              <div style={{width:`${(stats.learning/words.length)*100}%`,background:"#fbbf24",transition:"width 0.5s"}}/>
             </div>
           </div>
           <div style={{overflowX:"auto",paddingBottom:"4px"}}>
@@ -135,8 +200,8 @@ export default function App() {
           </div>
         </div>
         <div style={{padding:"16px"}}>
-          {tab==="flashcard" && <Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} />}
-          {tab==="quiz"      && <Quiz words={words} setStreak={setStreak} />}
+          {tab==="flashcard" && <Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} />}
+          {tab==="quiz"      && <Quiz words={words} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} />}
           {tab==="review"    && <Review weak={weak} unmarkWeak={unmarkWeak} />}
         </div>
       </div>
@@ -145,8 +210,8 @@ export default function App() {
 }
 
 // ── FLASHCARD ────────────────────────────────────────────────
-function Flashcard({words, weak, markWeak, unmarkWeak, setStreak}) {
-  const [idx, setIdx] = useState(0);
+function Flashcard({words, weak, markWeak, unmarkWeak, setStreak, prog, recordAnswer}) {
+  const [idx, setIdx] = useState(() => weightedPick(words, prog));
   const [step, setStep] = useState(0);
   const [showP, setShowP] = useState(false);
   const [showM, setShowM] = useState(false);
@@ -156,14 +221,16 @@ function Flashcard({words, weak, markWeak, unmarkWeak, setStreak}) {
   const [speaking, setSpeaking] = useState(false);
   const [pron, setPron] = useState(null);
 
-  useEffect(() => { setIdx(Math.floor(Math.random() * words.length)); }, [words]);
+  useEffect(() => { setIdx(weightedPick(words, prog)); }, [words]);
+
   const w = words[idx] || words[0];
-  const isWeak = weak.find(x => x.h === w?.h);
-  const tone = getTone(w?.p || "");
+  const isWeak = weak.find(x => x.h === w.h);
+  const tone = getTone(w.p || "");
+  const pl = getProgLabel(prog, w.h);
 
   const next = () => {
-    let ni; do { ni = Math.floor(Math.random() * words.length); } while (ni === idx && words.length > 1);
-    setIdx(ni); setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null); setPron(null); setSpeaking(false);
+    setIdx(weightedPick(words, prog));
+    setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null); setPron(null); setSpeaking(false);
   };
   const doSpeak = () => { setSpeaking(true); speak(w.h); setTimeout(() => setSpeaking(false), 1800); };
   const check = async () => {
@@ -173,25 +240,31 @@ function Flashcard({words, weak, markWeak, unmarkWeak, setStreak}) {
       const raw = await callAI(`Giáo viên HSK3. Từ: "${w.h}" (${w.p} - ${w.m}). Câu HS: "${sent}". JSON: {"score":"good/bad","comment":"nhận xét TV","example":"câu mẫu TQ","ex_pinyin":"pinyin","ex_vi":"nghĩa TV"}`);
       const p = JSON.parse(raw.replace(/```json|```/g,"").trim());
       setFb(p); setStep(3); setStreak(s => s+1);
+      recordAnswer(w.h, p.score === "good");
       if (p.score === "bad") markWeak(w, p.comment);
-    } catch { setFb({score:"bad",comment:"⚠️ Lỗi kết nối",example:"",ex_pinyin:"",ex_vi:""}); setStep(3); }
+    } catch {
+      setFb({score:"bad",comment:"⚠️ Lỗi kết nối",example:"",ex_pinyin:"",ex_vi:""}); setStep(3);
+    }
     setLoading(false);
   };
 
   if (!w) return null;
-  const R = (obj) => obj;
 
   return (
     <div>
       {step === 0 && (
         <div>
           <div style={{textAlign:"center",marginBottom:"12px"}}>
-            <span style={{background:"#f3f4f6",color:"#6b7280",fontSize:"11px",padding:"2px 8px",borderRadius:"999px"}}>{w.c}</span>
-            <div style={{fontSize:"72px",fontWeight:"bold",color:"#dc2626",margin:"8px 0",lineHeight:1}}>{w.h}{isWeak && <span style={{fontSize:"20px"}}>⚑</span>}</div>
-            <div>
-              {showP ? <p style={{fontSize:"20px",color:"#6b7280",margin:"4px 0"}}>{w.p}</p>
+            <div style={{display:"flex",justifyContent:"center",gap:"6px",marginBottom:"6px",flexWrap:"wrap"}}>
+              <span style={{background:"#f3f4f6",color:"#6b7280",fontSize:"11px",padding:"2px 8px",borderRadius:"999px"}}>{w.c}</span>
+              <span style={{background:"#f3f4f6",color:pl.color,fontSize:"11px",padding:"2px 8px",borderRadius:"999px",fontWeight:"bold"}}>{pl.label}</span>
+              {prog[w.h] && <span style={{background:"#f3f4f6",color:"#6b7280",fontSize:"11px",padding:"2px 8px",borderRadius:"999px"}}>{prog[w.h].correct}/{prog[w.h].seen} đúng</span>}
+            </div>
+            <div style={{fontSize:"72px",fontWeight:"bold",color:"#dc2626",lineHeight:1,marginBottom:"8px"}}>{w.h}{isWeak && <span style={{fontSize:"20px"}}>⚑</span>}</div>
+            <div style={{display:"flex",flexDirection:"column",gap:"4px",alignItems:"center"}}>
+              {showP ? <p style={{fontSize:"20px",color:"#6b7280",margin:0}}>{w.p}</p>
                 : <button onClick={() => setShowP(true)} style={{color:"#3b82f6",fontSize:"12px",background:"none",border:"none",cursor:"pointer",textDecoration:"underline"}}>👁 Pinyin</button>}
-              {showM ? <p style={{fontSize:"14px",color:"#15803d",fontWeight:"600",margin:"4px 0"}}>📖 {w.m}</p>
+              {showM ? <p style={{fontSize:"14px",color:"#15803d",fontWeight:"600",margin:0}}>📖 {w.m}</p>
                 : <button onClick={() => setShowM(true)} style={{color:"#3b82f6",fontSize:"12px",background:"none",border:"none",cursor:"pointer",textDecoration:"underline"}}>👁 Nghĩa</button>}
             </div>
           </div>
@@ -205,8 +278,8 @@ function Flashcard({words, weak, markWeak, unmarkWeak, setStreak}) {
               <button onClick={() => speak(w.p)} style={{fontSize:"11px",color:"#60a5fa",background:"none",border:"none",cursor:"pointer",textDecoration:"underline"}}>chậm</button>
             </div>
             <div style={{display:"flex",gap:"8px"}}>
-              <button onClick={() => setPron("good")} style={{flex:1,padding:"6px",borderRadius:"12px",fontSize:"11px",fontWeight:"bold",border:`2px solid ${pron==="good"?"#22c55e":"#86efac"}`,cursor:"pointer",background:pron==="good"?"#22c55e":"white",color:pron==="good"?"white":"#16a34a"}}>✅ Đúng!</button>
-              <button onClick={() => { setPron("bad"); markWeak(w,"Phát âm chưa chuẩn"); }} style={{flex:1,padding:"6px",borderRadius:"12px",fontSize:"11px",fontWeight:"bold",border:`2px solid ${pron==="bad"?"#f97316":"#fdba74"}`,cursor:"pointer",background:pron==="bad"?"#f97316":"white",color:pron==="bad"?"white":"#ea580c"}}>😅 Chưa chuẩn</button>
+              <button onClick={() => { setPron("good"); recordAnswer(w.h, true); }} style={{flex:1,padding:"6px",borderRadius:"12px",fontSize:"11px",fontWeight:"bold",border:`2px solid ${pron==="good"?"#22c55e":"#86efac"}`,cursor:"pointer",background:pron==="good"?"#22c55e":"white",color:pron==="good"?"white":"#16a34a"}}>✅ Đúng!</button>
+              <button onClick={() => { setPron("bad"); markWeak(w,"Phát âm chưa chuẩn"); recordAnswer(w.h, false); }} style={{flex:1,padding:"6px",borderRadius:"12px",fontSize:"11px",fontWeight:"bold",border:`2px solid ${pron==="bad"?"#f97316":"#fdba74"}`,cursor:"pointer",background:pron==="bad"?"#f97316":"white",color:pron==="bad"?"white":"#ea580c"}}>😅 Chưa chuẩn</button>
             </div>
             {pron==="good" && <p style={{color:"#16a34a",fontSize:"11px",marginTop:"4px",textAlign:"center"}}>🎉 Tuyệt!</p>}
             {pron==="bad"  && <p style={{color:"#ea580c",fontSize:"11px",marginTop:"4px",textAlign:"center"}}>📌 Lưu vào ⚑ Ôn lại!</p>}
@@ -221,7 +294,7 @@ function Flashcard({words, weak, markWeak, unmarkWeak, setStreak}) {
         <div>
           <div style={{textAlign:"center",marginBottom:"12px"}}>
             <div style={{fontSize:"56px",fontWeight:"bold",color:"#dc2626"}}>{w.h}</div>
-            <p style={{color:"#9ca3af",fontSize:"11px"}}>{w.p} — {w.m}</p>
+            <p style={{color:"#9ca3af",fontSize:"11px",margin:"4px 0"}}>{w.p} — {w.m}</p>
             <button onClick={doSpeak} style={{color:"#f87171",fontSize:"11px",background:"none",border:"none",cursor:"pointer",textDecoration:"underline"}}>{speaking?"🔊 Đang phát...":"🔊 Nghe lại"}</button>
           </div>
           <textarea value={sent} onChange={e => setSent(e.target.value)} placeholder={`Đặt câu có "${w.h}"...`}
@@ -282,7 +355,7 @@ function buildQuiz(words) {
   return result;
 }
 
-function Quiz({words, setStreak}) {
+function Quiz({words, setStreak, prog, recordAnswer}) {
   const [qs, setQs] = useState([]);
   const [qi, setQi] = useState(0);
   const [score, setScore] = useState(0);
@@ -290,18 +363,33 @@ function Quiz({words, setStreak}) {
   const [sel, setSel] = useState(null);
   const [typed, setTyped] = useState("");
   const [typedRes, setTypedRes] = useState(null);
-  const [mSel, setMSel] = useState({l:null, r:null});
+  const [mSel, setMSel] = useState({l:null,r:null});
   const [mDone, setMDone] = useState([]);
   const [mWrong, setMWrong] = useState(null);
 
-  useEffect(() => { if (words.length >= 4) { setQs(buildQuiz(words)); } }, [words]);
+  useEffect(() => { if (words.length >= 4) setQs(buildQuiz(words)); }, [words]);
 
   const resetQ = () => { setSel(null); setTyped(""); setTypedRes(null); setMSel({l:null,r:null}); setMDone([]); setMWrong(null); };
   const next = () => {
-    if (qi + 1 >= TOTAL) { setDone(true); setStreak(s => s+1); }
+    if (qi+1 >= TOTAL) { setDone(true); setStreak(s => s+1); }
     else { setQi(i => i+1); resetQ(); }
   };
   const restart = () => { setQs(buildQuiz(words)); setQi(0); resetQ(); setScore(0); setDone(false); };
+
+  const handleMCQ = (opt) => {
+    if (sel) return;
+    const correct = opt.h === qs[qi].w.h;
+    setSel(opt.h);
+    if (correct) setScore(s => s+1);
+    recordAnswer(qs[qi].w.h, correct);
+  };
+  const handleTyping = () => {
+    if (!typed.trim()) return;
+    const correct = normPin(typed) === normPin(qs[qi].w.p);
+    setTypedRes(correct ? "good" : "bad");
+    if (correct) setScore(s => s+1);
+    recordAnswer(qs[qi].w.h, correct);
+  };
 
   if (!qs.length) return <p style={{textAlign:"center",color:"#9ca3af"}}>Cần ít nhất 4 từ.</p>;
 
@@ -312,7 +400,7 @@ function Quiz({words, setStreak}) {
         <div style={{fontSize:"52px",marginBottom:"8px"}}>{pct>=80?"🏆":pct>=50?"👍":"💪"}</div>
         <p style={{fontSize:"22px",fontWeight:"bold",marginBottom:"4px"}}>{score}/{TOTAL}</p>
         <div style={{background:"#f3f4f6",borderRadius:"999px",height:"10px",margin:"10px 0 6px"}}>
-          <div style={{background:pct>=80?"#22c55e":pct>=50?"#f59e0b":"#ef4444",height:"10px",borderRadius:"999px",width:`${pct}%`}}/>
+          <div style={{background:pct>=80?"#22c55e":pct>=50?"#f59e0b":"#ef4444",height:"10px",borderRadius:"999px",width:`${pct}%`,transition:"width 0.5s"}}/>
         </div>
         <p style={{color:"#6b7280",fontSize:"13px",marginBottom:"20px"}}>{pct>=80?"Xuất sắc!":pct>=50?"Khá tốt!":"Ôn thêm nhé!"}</p>
         <button onClick={restart} style={{width:"100%",padding:"10px",borderRadius:"16px",fontWeight:"bold",background:"#ef4444",color:"white",border:"none",cursor:"pointer"}}>🔄 Làm lại</button>
@@ -342,11 +430,16 @@ function Quiz({words, setStreak}) {
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"10px"}}>
             {q.opts.map(opt => {
-              const ok = opt.h===q.w.h, picked = sel===opt.h;
+              const ok = opt.h===q.w.h;
+              const picked = sel===opt.h;
               let bg="white", border="2px solid #e5e7eb", color="#374151";
-              if (sel) { if(ok){bg="#dcfce7";border="2px solid #4ade80";color="#15803d";}else if(picked){bg="#fee2e2";border="2px solid #f87171";color="#b91c1c";}else{bg="#f9fafb";border="2px solid #f3f4f6";color="#d1d5db";} }
+              if (sel) {
+                if (ok) { bg="#dcfce7"; border="2px solid #4ade80"; color="#15803d"; }
+                else if (picked) { bg="#fee2e2"; border="2px solid #f87171"; color="#b91c1c"; }
+                else { bg="#f9fafb"; border="2px solid #f3f4f6"; color="#d1d5db"; }
+              }
               return (
-                <button key={opt.h} onClick={() => { if(!sel){setSel(opt.h);if(ok)setScore(s=>s+1);} }}
+                <button key={opt.h} onClick={() => handleMCQ(opt)}
                   style={{padding:"10px",borderRadius:"14px",fontSize:"11px",textAlign:"center",border,background:bg,color,cursor:"pointer",minHeight:"44px"}}>
                   {q.type==="meaning"?opt.m:opt.p}
                 </button>
@@ -366,16 +459,18 @@ function Quiz({words, setStreak}) {
           </div>
           {typedRes && (
             <div style={{background:typedRes==="good"?"#dcfce7":"#fee2e2",border:`2px solid ${typedRes==="good"?"#4ade80":"#f87171"}`,borderRadius:"12px",padding:"8px",textAlign:"center",marginBottom:"8px",fontSize:"13px"}}>
-              {typedRes==="good" ? <span>✅ Đúng rồi! 🎉 Pinyin: <strong>{q.w.p}</strong></span> : <span>❌ Đáp án: <strong>{q.w.p}</strong></span>}
+              {typedRes==="good"
+                ? <span>✅ Đúng rồi! 🎉 Pinyin: <strong>{q.w.p}</strong></span>
+                : <span>❌ Đáp án: <strong>{q.w.p}</strong></span>}
             </div>
           )}
           {!typedRes ? (
             <div>
               <input value={typed} onChange={e => setTyped(e.target.value)}
-                onKeyDown={e => { if(e.key==="Enter"&&typed.trim()){const ok=normPin(typed)===normPin(q.w.p);setTypedRes(ok?"good":"bad");if(ok)setScore(s=>s+1);} }}
+                onKeyDown={e => { if (e.key==="Enter") handleTyping(); }}
                 placeholder="Gõ pinyin rồi Enter..."
                 style={{width:"100%",border:"2px solid #e5e7eb",borderRadius:"14px",padding:"10px",fontSize:"15px",outline:"none",boxSizing:"border-box",marginBottom:"8px"}} autoFocus/>
-              <button onClick={() => { if(typed.trim()){const ok=normPin(typed)===normPin(q.w.p);setTypedRes(ok?"good":"bad");if(ok)setScore(s=>s+1);} }} disabled={!typed.trim()}
+              <button onClick={handleTyping} disabled={!typed.trim()}
                 style={{width:"100%",padding:"8px",borderRadius:"16px",fontWeight:"bold",fontSize:"13px",background:typed.trim()?"#22c55e":"#d1d5db",color:"white",border:"none",cursor:"pointer"}}>✅ Kiểm tra</button>
             </div>
           ) : (
@@ -387,13 +482,13 @@ function Quiz({words, setStreak}) {
       {q.kind === "match" && (
         <MatchQ q={q} mDone={mDone} mSel={mSel} mWrong={mWrong}
           setMSel={setMSel} setMDone={setMDone} setMWrong={setMWrong}
-          setScore={setScore} next={next} qi={qi} />
+          setScore={setScore} recordAnswer={recordAnswer} next={next} qi={qi} />
       )}
     </div>
   );
 }
 
-function MatchQ({q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore, next, qi}) {
+function MatchQ({q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore, recordAnswer, next, qi}) {
   const allDone = mDone.length === q.pairs.length;
   const pick = (side, val) => {
     setMWrong(null);
@@ -405,9 +500,10 @@ function MatchQ({q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore,
         const nd = [...mDone, lw];
         setMDone(nd);
         setMSel({l:null,r:null});
-        if (nd.length===q.pairs.length) setScore(s=>s+1);
+        if (nd.length===q.pairs.length) { setScore(s=>s+1); nd.forEach(w => recordAnswer(w.h, true)); }
       } else {
         setMWrong(ns.l);
+        recordAnswer(ns.l, false);
         setTimeout(() => { setMSel({l:null,r:null}); setMWrong(null); }, 1800);
       }
     }
@@ -424,11 +520,11 @@ function MatchQ({q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore,
             const selL = mSel.l===pw.h;
             const wrong = mWrong===pw.h;
             return (
-              <button key={pw.h} onClick={() => { if(!done) pick("l",pw.h); }}
+              <button key={pw.h} onClick={() => { if (!done) pick("l", pw.h); }}
                 style={{padding:"10px",borderRadius:"14px",fontSize:"18px",fontWeight:"bold",minHeight:"52px",cursor:done?"default":"pointer",border:`2px solid ${done?"#4ade80":wrong?"#f87171":selL?"#dc2626":"#e5e7eb"}`,background:done?"#dcfce7":selL?"#fff1f0":"white",color:done?"#15803d":"#dc2626"}}>
                 {pw.h}
                 {wrong && <div style={{fontSize:"10px",color:"#f87171",fontWeight:"normal",marginTop:"2px"}}>{pw.p}</div>}
-                {done && <div style={{fontSize:"10px",color:"#15803d",fontWeight:"normal",marginTop:"2px"}}>{pw.p}</div>}
+                {done  && <div style={{fontSize:"10px",color:"#15803d",fontWeight:"normal",marginTop:"2px"}}>{pw.p}</div>}
               </button>
             );
           })}
@@ -438,7 +534,7 @@ function MatchQ({q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore,
             const done = !!mDone.find(x=>x.m===meaning);
             const selR = mSel.r===meaning;
             return (
-              <button key={meaning} onClick={() => { if(!done) pick("r",meaning); }}
+              <button key={meaning} onClick={() => { if (!done) pick("r", meaning); }}
                 style={{padding:"8px",borderRadius:"14px",fontSize:"10px",minHeight:"52px",textAlign:"center",lineHeight:"1.3",cursor:done?"default":"pointer",border:`2px solid ${done?"#4ade80":selR?"#dc2626":"#e5e7eb"}`,background:done?"#dcfce7":selR?"#fff1f0":"white",color:done?"#15803d":"#374151"}}>
                 {meaning}
               </button>
@@ -463,12 +559,12 @@ function Review({weak, unmarkWeak}) {
   const [fb, setFb] = useState(null);
   const [checking, setChecking] = useState(false);
 
-  const pool = weak.length>=3 ? weak : [...weak, ...W.filter(w=>!weak.find(x=>x.h===w.h)).slice(0,6-weak.length)];
+  const pool = weak.length>=3 ? weak : [...weak, ...W.filter(w=>!weak.find(x=>x.h===w.h)).slice(0, 6-weak.length)];
 
   const generate = async () => {
     setLoading(true); setMode("generate"); setShowTrans(false); setShowPin(false); setUserTrans(""); setFb(null);
     const picked = shuffle(pool).slice(0, Math.min(6, pool.length));
-    const wl = picked.map(w=>`${w.h}(${w.m})`).join(", ");
+    const wl = picked.map(w => `${w.h}(${w.m})`).join(", ");
     try {
       const raw = await callAI(`Giáo viên HSK3. Viết ${type==="dialogue"?"đoạn hội thoại 4-6 lượt (A và B)":"đoạn văn 5-7 câu"} HSK3 dùng từ: ${wl}. JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`);
       const p = JSON.parse(raw.replace(/```json|```/g,"").trim());
@@ -491,11 +587,12 @@ function Review({weak, unmarkWeak}) {
     <div>
       <div style={{background:"#fff7ed",border:"2px solid #fed7aa",borderRadius:"16px",padding:"12px",marginBottom:"12px"}}>
         <p style={{fontWeight:"bold",color:"#c2410c",fontSize:"13px",marginBottom:"4px"}}>📋 Từ cần ôn</p>
-        {weak.length===0 ? <p style={{color:"#9ca3af",fontSize:"11px"}}>Chưa có — dùng từ ngẫu nhiên HSK3</p>
+        {weak.length===0
+          ? <p style={{color:"#9ca3af",fontSize:"11px"}}>Chưa có — dùng từ ngẫu nhiên HSK3</p>
           : <div style={{display:"flex",flexWrap:"wrap",gap:"4px",marginTop:"4px"}}>
               {weak.map(w => (
                 <span key={w.h} style={{background:"white",border:"1px solid #fdba74",color:"#dc2626",fontSize:"11px",padding:"1px 8px",borderRadius:"999px",fontWeight:"bold",display:"flex",alignItems:"center",gap:"4px"}}>
-                  {w.h}<button onClick={()=>unmarkWeak(w.h)} style={{color:"#d1d5db",background:"none",border:"none",cursor:"pointer",fontSize:"10px"}}>✕</button>
+                  {w.h}<button onClick={() => unmarkWeak(w.h)} style={{color:"#d1d5db",background:"none",border:"none",cursor:"pointer",fontSize:"10px"}}>✕</button>
                 </span>
               ))}
             </div>}
@@ -503,14 +600,19 @@ function Review({weak, unmarkWeak}) {
       <p style={{fontSize:"13px",fontWeight:"bold",color:"#374151",marginBottom:"8px"}}>Chọn loại bài:</p>
       <div style={{display:"flex",gap:"8px",marginBottom:"14px"}}>
         {[["dialogue","💬 Hội thoại"],["paragraph","📝 Đoạn văn"]].map(([k,l]) => (
-          <button key={k} onClick={()=>setType(k)} style={{flex:1,padding:"10px",borderRadius:"16px",fontSize:"13px",fontWeight:"bold",border:`2px solid ${type===k?"#ef4444":"#e5e7eb"}`,background:type===k?"#ef4444":"white",color:type===k?"white":"#6b7280",cursor:"pointer"}}>{l}</button>
+          <button key={k} onClick={() => setType(k)} style={{flex:1,padding:"10px",borderRadius:"16px",fontSize:"13px",fontWeight:"bold",border:`2px solid ${type===k?"#ef4444":"#e5e7eb"}`,background:type===k?"#ef4444":"white",color:type===k?"white":"#6b7280",cursor:"pointer"}}>{l}</button>
         ))}
       </div>
       <button onClick={generate} style={{width:"100%",padding:"10px",borderRadius:"16px",fontWeight:"bold",fontSize:"14px",background:"#ef4444",color:"white",border:"none",cursor:"pointer"}}>✨ Tạo bài luyện!</button>
     </div>
   );
 
-  if (loading) return <div style={{textAlign:"center",padding:"40px 0"}}><div style={{fontSize:"36px"}}>✍️</div><p style={{color:"#6b7280",fontWeight:"bold",marginTop:"8px"}}>Đang tạo bài...</p></div>;
+  if (loading) return (
+    <div style={{textAlign:"center",padding:"40px 0"}}>
+      <div style={{fontSize:"36px"}}>✍️</div>
+      <p style={{color:"#6b7280",fontWeight:"bold",marginTop:"8px"}}>Đang tạo bài...</p>
+    </div>
+  );
 
   if (mode==="reading" && content) return (
     <div>
@@ -520,16 +622,16 @@ function Review({weak, unmarkWeak}) {
       <div style={{background:"#f9fafb",border:"2px solid #e5e7eb",borderRadius:"16px",padding:"12px",marginBottom:"10px"}}>
         <p style={{fontSize:"11px",color:"#9ca3af",fontWeight:"bold",marginBottom:"6px"}}>{type==="dialogue"?"💬 Hội thoại":"📝 Đoạn văn"}</p>
         <p style={{color:"#1f2937",lineHeight:"1.6",fontSize:"14px",whiteSpace:"pre-line"}}>{content.chinese}</p>
-        <button onClick={()=>setShowPin(v=>!v)} style={{color:"#60a5fa",fontSize:"11px",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",marginTop:"6px"}}>{showPin?"🙈 Ẩn pinyin":"👁 Xem pinyin"}</button>
+        <button onClick={() => setShowPin(v=>!v)} style={{color:"#60a5fa",fontSize:"11px",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",marginTop:"6px"}}>{showPin?"🙈 Ẩn pinyin":"👁 Xem pinyin"}</button>
         {showPin && <p style={{color:"#9ca3af",fontSize:"11px",marginTop:"4px",lineHeight:"1.6",whiteSpace:"pre-line"}}>{content.pinyin}</p>}
       </div>
       {!showTrans && (
         <div style={{marginBottom:"10px"}}>
           <p style={{fontSize:"13px",fontWeight:"bold",color:"#374151",marginBottom:"6px"}}>✏️ Bạn dịch thử đi!</p>
-          <textarea value={userTrans} onChange={e=>setUserTrans(e.target.value)} placeholder="Gõ bản dịch tiếng Việt..."
+          <textarea value={userTrans} onChange={e => setUserTrans(e.target.value)} placeholder="Gõ bản dịch tiếng Việt..."
             style={{width:"100%",border:"2px solid #e5e7eb",borderRadius:"16px",padding:"10px",fontSize:"13px",outline:"none",resize:"none",boxSizing:"border-box"}} rows={4}/>
           <div style={{display:"flex",gap:"8px",marginTop:"6px"}}>
-            <button onClick={()=>setShowTrans(true)} style={{flex:1,padding:"6px",borderRadius:"12px",background:"#f3f4f6",color:"#6b7280",border:"none",cursor:"pointer",fontSize:"11px"}}>🔍 Xem đáp án</button>
+            <button onClick={() => setShowTrans(true)} style={{flex:1,padding:"6px",borderRadius:"12px",background:"#f3f4f6",color:"#6b7280",border:"none",cursor:"pointer",fontSize:"11px"}}>🔍 Xem đáp án</button>
             <button onClick={checkTrans} disabled={checking||!userTrans.trim()} style={{flex:1,padding:"6px",borderRadius:"12px",fontWeight:"bold",fontSize:"11px",background:checking||!userTrans.trim()?"#d1d5db":"#22c55e",color:"white",border:"none",cursor:"pointer"}}>{checking?"⏳...":"✅ Chấm bài!"}</button>
           </div>
         </div>
@@ -538,7 +640,7 @@ function Review({weak, unmarkWeak}) {
         <div style={{borderRadius:"16px",padding:"10px",marginBottom:"10px",border:`2px solid ${fb.score==="good"?"#86efac":fb.score==="ok"?"#fde68a":"#fca5a5"}`,background:fb.score==="good"?"#f0fdf4":fb.score==="ok"?"#fffbeb":"#fff1f2",fontSize:"13px"}}>
           <p style={{fontWeight:"bold",marginBottom:"4px"}}>{fb.score==="good"?"🎉 Dịch rất tốt!":fb.score==="ok"?"👍 Khá tốt!":"💪 Cần cải thiện!"}</p>
           <p style={{color:"#374151",fontSize:"12px"}}>{fb.comment}</p>
-          <button onClick={()=>setShowTrans(true)} style={{color:"#3b82f6",fontSize:"11px",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",marginTop:"4px"}}>Xem đáp án →</button>
+          <button onClick={() => setShowTrans(true)} style={{color:"#3b82f6",fontSize:"11px",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",marginTop:"4px"}}>Xem đáp án →</button>
         </div>
       )}
       {showTrans && (
@@ -548,23 +650,10 @@ function Review({weak, unmarkWeak}) {
         </div>
       )}
       <div style={{display:"flex",gap:"8px"}}>
-        <button onClick={()=>{setMode("menu");setContent(null);}} style={{flex:1,padding:"8px",borderRadius:"16px",background:"#f3f4f6",color:"#6b7280",border:"none",cursor:"pointer",fontSize:"12px"}}>← Menu</button>
+        <button onClick={() => { setMode("menu"); setContent(null); }} style={{flex:1,padding:"8px",borderRadius:"16px",background:"#f3f4f6",color:"#6b7280",border:"none",cursor:"pointer",fontSize:"12px"}}>← Menu</button>
         <button onClick={generate} style={{flex:1,padding:"8px",borderRadius:"16px",fontWeight:"bold",fontSize:"12px",background:"#ef4444",color:"white",border:"none",cursor:"pointer"}}>🔄 Bài mới!</button>
       </div>
     </div>
   );
   return null;
-}
-
-async function callAI(prompt) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1000
-    })
-  });
-  const data = await res.json();
-  return data.content[0].text;
 }
