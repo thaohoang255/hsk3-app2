@@ -366,7 +366,7 @@ function Quiz({words, setStreak}) {
           </div>
           {typedRes && (
             <div style={{background:typedRes==="good"?"#dcfce7":"#fee2e2",border:`2px solid ${typedRes==="good"?"#4ade80":"#f87171"}`,borderRadius:"12px",padding:"8px",textAlign:"center",marginBottom:"8px",fontSize:"13px"}}>
-              {typedRes==="good" ? "✅ Đúng rồi! 🎉" : <span>❌ Đáp án: <strong>{q.w.p}</strong></span>}
+              {typedRes==="good" ? <span>✅ Đúng rồi! 🎉 Pinyin: <strong>{q.w.p}</strong></span> : <span>❌ Đáp án: <strong>{q.w.p}</strong></span>}
             </div>
           )}
           {!typedRes ? (
