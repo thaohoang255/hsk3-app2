@@ -237,7 +237,7 @@ function Flashcard({words, weak, markWeak, unmarkWeak, setStreak, prog, recordAn
     if (!sent.trim()) return;
     setLoading(true);
     try {
-      const raw = await callAI(`Giáo viên HSK3. Từ: "${w.h}" (${w.p} - ${w.m}). Câu HS: "${sent}". JSON: {"score":"good/bad","comment":"nhận xét TV","example":"câu mẫu TQ","ex_pinyin":"pinyin","ex_vi":"nghĩa TV"}`);
+      const raw = await callAI(`HSK3. Từ "${w.h}"(${w.p}=${w.m}). Câu:"${sent}". JSON:{"score":"good/bad","comment":"1 câu TV","example":"câu mẫu","ex_pinyin":"pinyin","ex_vi":"nghĩa"}`);
       const p = JSON.parse(raw.replace(/```json|```/g,"").trim());
       setFb(p); setStep(3); setStreak(s => s+1);
       recordAnswer(w.h, p.score === "good");
@@ -566,7 +566,7 @@ function Review({weak, unmarkWeak}) {
     const picked = shuffle(pool).slice(0, Math.min(6, pool.length));
     const wl = picked.map(w => `${w.h}(${w.m})`).join(", ");
     try {
-      const raw = await callAI(`Giáo viên HSK3. Viết ${type==="dialogue"?"đoạn hội thoại 4-6 lượt (A và B)":"đoạn văn 5-7 câu"} HSK3 dùng từ: ${wl}. JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`);
+      const raw = await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại 4 lượt A/B":"đoạn văn 5 câu"} dùng: ${wl}. JSON:{"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`);
       const p = JSON.parse(raw.replace(/```json|```/g,"").trim());
       setContent(p); setMode("reading");
     } catch { setMode("menu"); }
@@ -577,7 +577,7 @@ function Review({weak, unmarkWeak}) {
     if (!userTrans.trim()) return;
     setChecking(true);
     try {
-      const raw = await callAI(`Giáo viên HSK3. Gốc: "${content.chinese}". Chuẩn: "${content.vietnamese}". HS: "${userTrans}". JSON: {"score":"good/ok/bad","comment":"nhận xét 2-3 câu TV"}`);
+      const raw = await callAI(`HSK3. Gốc:"${content.chinese}". Chuẩn:"${content.vietnamese}". HS:"${userTrans}". JSON:{"score":"good/ok/bad","comment":"1-2 câu TV"}`);
       setFb(JSON.parse(raw.replace(/```json|```/g,"").trim()));
     } catch { setFb({score:"bad",comment:"⚠️ Lỗi kết nối."}); }
     setChecking(false);
