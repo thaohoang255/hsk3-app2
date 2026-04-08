@@ -1,11 +1,8 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-
-  const { messages, max_tokens = 1000 } = req.body;
+  const { messages, max_tokens = 500 } = req.body;
   const prompt = messages?.[0]?.content || "";
-
-  // Thêm instruction bắt buộc trả về JSON thuần
-  const strictPrompt = prompt + "\n\nQUAN TRỌNG: Chỉ trả về JSON thuần túy, không có text trước hoặc sau, không có markdown, không có ```json```.";
+  const strictPrompt = prompt + "\n\nChỉ trả về JSON thuần, không markdown, không text thừa.";
 
   try {
     const response = await fetch(
@@ -15,25 +12,24 @@ export default async function handler(req, res) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: strictPrompt }] }],
-          generationConfig: { maxOutputTokens: max_tokens, temperature: 0.7 },
+          generationConfig: {
+            maxOutputTokens: max_tokens,
+            temperature: 0.7,
+          },
+          // Tắt thinking mode để nhanh hơn
+          thinkingConfig: { thinkingBudget: 0 },
         }),
       }
     );
-
     const data = await response.json();
     console.log("STATUS:", response.status);
-    console.log("FULL RESPONSE:", JSON.stringify(data));
-
+    console.log("RESPONSE:", JSON.stringify(data).slice(0, 300));
     let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    
-    // Extract JSON nếu bị bọc trong markdown hoặc có text thừa
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) text = jsonMatch[0];
-    
-    console.log("EXTRACTED TEXT:", text ? "OK" : "EMPTY");
     res.status(200).json({ content: [{ text }] });
   } catch (err) {
-    console.error("FETCH ERROR:", err.message);
+    console.error("ERROR:", err.message);
     res.status(500).json({ error: err.message });
   }
 }
