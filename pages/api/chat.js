@@ -16,8 +16,6 @@ export default async function handler(req, res) {
             maxOutputTokens: max_tokens,
             temperature: 0.7,
           },
-          // Tắt thinking mode để nhanh hơn
-          thinkingConfig: { thinkingBudget: 0 },
         }),
       }
     );
