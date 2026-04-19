@@ -164,7 +164,6 @@ async function callAI(prompt) {
   const m = text.match(/\{[\s\S]*\}/);
   return m ? m[0] : text;
 }
-
 // ── SHARED STYLES ────────────────────────────────────────────
 const card = {background:C.ivory,border:`1px solid ${C.cream}`,borderRadius:12,padding:"16px"};
 const btn = (bg,fg,border)=>({background:bg,color:fg,border:`1px solid ${border||bg}`,borderRadius:8,padding:"7px 14px",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"});
@@ -186,14 +185,14 @@ export default function App() {
   const pct=words.length?Math.round((stats.mastered/words.length)*100):0;
 
   return (
-    <div style={{minHeight:"100vh",background:C.parchment,fontFamily:"Georgia, serif",padding:"16px"}}>
-      <div style={{maxWidth:440,margin:"0 auto"}}>
+    <div style={{minHeight:"100vh",background:C.parchment,fontFamily:"Georgia, serif",padding:"30px 16px",display:"flex",alignItems:"flex-start",justifyContent:"center"}}>
+      <div style={{width:"100%",maxWidth:500}}>
 
         {/* Header */}
         <div style={{marginBottom:20}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
             <div>
-              <h1 style={{fontSize:22,fontWeight:500,color:C.nearBlack,margin:0,letterSpacing:"-0.3px"}}>
+              <h1 style={{fontSize:24,fontWeight:500,color:C.nearBlack,margin:0,letterSpacing:"-0.3px"}}>
                 漢語水平考試 HSK3
               </h1>
               <p style={{fontSize:13,color:C.stone,margin:"4px 0 0",fontFamily:"Arial, sans-serif"}}>
@@ -234,7 +233,7 @@ export default function App() {
         </div>
 
         {/* Tabs */}
-        <div style={{display:"flex",gap:"8px",marginTop:"8px"}}>
+          <div style={{background:C.sand,borderRadius:10,padding:3,marginBottom:16,display:"flex",gap:3}}>
             {[["flashcard","📖 Học"],["quiz","🧩 Quiz"],["review","⚑ Ôn lại"]].map(([k,l])=>(
               <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:"7px 4px",borderRadius:8,fontSize:12,fontWeight:500,border:"none",cursor:"pointer",fontFamily:"Arial, sans-serif",background:tab===k?C.ivory:C.sand,color:tab===k?C.nearBlack:C.olive,transition:"all 0.15s"}}>
                 {l}
@@ -243,7 +242,7 @@ export default function App() {
           </div>
 
         {/* Content */}
-        <div>
+        <div style={{padding:"20px 20px"}}>
           {tab==="flashcard"&&<Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer}/>}
           {tab==="quiz"&&<Quiz words={words} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer}/>}
           {tab==="review"&&<Review weak={weak} unmarkWeak={unmarkWeak}/>}
