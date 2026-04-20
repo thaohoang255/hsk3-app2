@@ -545,10 +545,10 @@ function Review({weak,unmarkWeak}){
   const pool=weak.length>=3?weak:[...weak,...W.filter(w=>!weak.find(x=>x.h===w.h)).slice(0,6-weak.length)];
   const generate=async()=>{
     setLoading(true);setMode("generate");setShowTrans(false);setShowPin(false);setUserTrans("");setFb(null);
-    const picked=shuffle(pool).slice(0,Math.min(6,pool.length));
+    const picked=shuffle(pool).slice(0,Math.min(type==="dialogue"?3:4,pool.length));
     const wl=picked.map(w=>`${w.h}(${w.m})`).join(", ");
     try{
-      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại 4 lượt A/B":"đoạn văn 5 câu"} dùng: ${wl}. JSON:{"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1200);
+      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại ngắn 4 lượt A/B":"đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1500);
       const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
       setContent(p);setMode("reading");
     }catch(e){console.log("Review error:",e);setMode("menu");}
