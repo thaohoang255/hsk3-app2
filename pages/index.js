@@ -150,13 +150,13 @@ const getProgLabel = (prog,h) => {
   return {label:"cần ôn",bg:C.errorBg,fg:C.error};
 };
 
-async function callAI(prompt) {
+async function callAI(prompt, maxTokens=500) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 500
+      max_tokens: maxTokens
     })
   });
   const data = await res.json();
@@ -164,6 +164,7 @@ async function callAI(prompt) {
   const m = text.match(/\{[\s\S]*\}/);
   return m ? m[0] : text;
 }
+
 // ── SHARED STYLES ────────────────────────────────────────────
 const card = {background:C.ivory,border:`1px solid ${C.cream}`,borderRadius:12,padding:"16px"};
 const btn = (bg,fg,border)=>({background:bg,color:fg,border:`1px solid ${border||bg}`,borderRadius:8,padding:"7px 14px",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"});
@@ -185,14 +186,14 @@ export default function App() {
   const pct=words.length?Math.round((stats.mastered/words.length)*100):0;
 
   return (
-    <div style={{minHeight:"100vh",background:C.parchment,fontFamily:"Georgia, serif",padding:"30px 16px",display:"flex",alignItems:"flex-start",justifyContent:"center"}}>
-      <div style={{width:"100%",maxWidth:500}}>
+    <div style={{minHeight:"100vh",background:C.parchment,fontFamily:"Georgia, serif",padding:"40px 16px",display:"flex",alignItems:"flex-start",justifyContent:"center"}}>
+      <div style={{width:"100%",maxWidth:620}}>
 
         {/* Header */}
         <div style={{marginBottom:20}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
             <div>
-              <h1 style={{fontSize:24,fontWeight:500,color:C.nearBlack,margin:0,letterSpacing:"-0.3px"}}>
+              <h1 style={{fontSize:28,fontWeight:500,color:C.nearBlack,margin:0,letterSpacing:"-0.3px"}}>
                 漢語水平考試 HSK3
               </h1>
               <p style={{fontSize:13,color:C.stone,margin:"4px 0 0",fontFamily:"Arial, sans-serif"}}>
@@ -242,7 +243,7 @@ export default function App() {
           </div>
 
         {/* Content */}
-        <div style={{padding:"20px 20px"}}>
+                  <div style={{padding:"24px 24px"}}>
           {tab==="flashcard"&&<Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer}/>}
           {tab==="quiz"&&<Quiz words={words} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer}/>}
           {tab==="review"&&<Review weak={weak} unmarkWeak={unmarkWeak}/>}
@@ -529,7 +530,6 @@ function MatchQ({q,mDone,mSel,mWrong,setMSel,setMDone,setMWrong,setScore,recordA
     </div>
   );
 }
-
 
 // ── REVIEW ───────────────────────────────────────────────────
 function Review({weak,unmarkWeak}){
