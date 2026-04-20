@@ -548,7 +548,7 @@ function Review({weak,unmarkWeak}){
     const picked=shuffle(pool).slice(0,Math.min(6,pool.length));
     const wl=picked.map(w=>`${w.h}(${w.m})`).join(", ");
     try{
-      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại 4 lượt A/B":"đoạn văn 5 câu"} dùng: ${wl}. JSON:{"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`);
+      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại 4 lượt A/B":"đoạn văn 5 câu"} dùng: ${wl}. JSON:{"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1200);
       const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
       setContent(p);setMode("reading");
     }catch(e){console.log("Review error:",e);setMode("menu");}
