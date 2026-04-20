@@ -150,7 +150,7 @@ const getProgLabel = (prog,h) => {
   return {label:"cần ôn",bg:C.errorBg,fg:C.error};
 };
 
-async function callAI(prompt, maxTokens=500) {
+async function callAI(prompt, maxTokens=1000) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -548,7 +548,7 @@ function Review({weak,unmarkWeak}){
     const picked=shuffle(pool).slice(0,Math.min(type==="dialogue"?3:4,pool.length));
     const wl=picked.map(w=>`${w.h}(${w.m})`).join(", ");
     try{
-      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại ngắn 4 lượt A/B":"đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1500);
+      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại ngắn 4 lượt A/B":"đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1000);
       const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
       setContent(p);setMode("reading");
     }catch(e){console.log("Review error:",e);setMode("menu");}
