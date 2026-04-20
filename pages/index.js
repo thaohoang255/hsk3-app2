@@ -530,6 +530,7 @@ function MatchQ({q,mDone,mSel,mWrong,setMSel,setMDone,setMWrong,setScore,recordA
   );
 }
 
+
 // ── REVIEW ───────────────────────────────────────────────────
 function Review({weak,unmarkWeak}){
   const [mode,setMode]=useState("menu");
@@ -548,15 +549,16 @@ function Review({weak,unmarkWeak}){
     const wl=picked.map(w=>`${w.h}(${w.m})`).join(", ");
     try{
       const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại 4 lượt A/B":"đoạn văn 5 câu"} dùng: ${wl}. JSON:{"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`);
-      const p=JSON.parse(raw);setContent(p);setMode("reading");
-    }catch{setMode("menu");}
+      const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
+      setContent(p);setMode("reading");
+    }catch(e){console.log("Review error:",e);setMode("menu");}
     setLoading(false);
   };
   const checkTrans=async()=>{
     if(!userTrans.trim())return;setChecking(true);
     try{
       const raw=await callAI(`HSK3. Gốc:"${content.chinese}". Chuẩn:"${content.vietnamese}". HS:"${userTrans}". JSON:{"score":"good/ok/bad","comment":"1-2 câu TV"}`);
-      setFb(JSON.parse(raw));
+      setFb(JSON.parse(raw.replace(/```json|```/g,"").trim()));
     }catch{setFb({score:"bad",comment:"⚠️ Lỗi kết nối."});}
     setChecking(false);
   };
