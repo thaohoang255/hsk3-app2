@@ -150,7 +150,7 @@ const getProgLabel = (prog,h) => {
   return {label:"cần ôn",bg:C.errorBg,fg:C.error};
 };
 
-async function callAI(prompt, maxTokens=1000) {
+async function callAI(prompt, maxTokens=500) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -275,7 +275,7 @@ function Flashcard({words,weak,markWeak,unmarkWeak,setStreak,prog,recordAnswer})
     if(!sent.trim())return;
     setLoading(true);
     try{
-      const raw=await callAI(`HSK3 "${w.h}"(${w.p}=${w.m}). Câu:"${sent}". JSON:{"score":"good/bad","comment":"1 câu TV","example":"câu mẫu TQ","ex_pinyin":"pinyin","ex_vi":"nghĩa"}`);
+      const raw=await callAI(`Giáo viên HSK3. Từ: "${w.h}"(${w.p}=${w.m}). Câu HS: "${sent}". Trả JSON: {"score":"good/bad","correct_usage":"ngữ pháp đúng/sai ngắn gọn","meaning_ok":"tự nhiên không","comment":"1 câu TV","example":"câu mẫu TQ","ex_pinyin":"pinyin","ex_vi":"nghĩa TV"}`);
       const p=JSON.parse(raw);
       setFb(p);setStep(3);setStreak(s=>s+1);
       recordAnswer(w.h,p.score==="good");
@@ -358,6 +358,8 @@ function Flashcard({words,weak,markWeak,unmarkWeak,setStreak,prog,recordAnswer})
             <p style={{color:C.charcoal,fontSize:13,marginBottom:fb.example?10:0,fontFamily:"Arial, sans-serif"}}>{fb.comment}</p>
             {fb.example&&(
               <div style={{background:C.ivory,borderRadius:8,padding:10}}>
+                {fb.correct_usage&&<p style={{fontSize:12,color:C.charcoal,margin:"0 0 4px",fontFamily:"Arial, sans-serif"}}>📐 <strong>Ngữ pháp:</strong> {fb.correct_usage}</p>}
+                {fb.meaning_ok&&<p style={{fontSize:12,color:C.charcoal,margin:"0 0 8px",fontFamily:"Arial, sans-serif"}}>💬 <strong>Tự nhiên:</strong> {fb.meaning_ok}</p>}
                 <p style={{fontSize:11,color:C.stone,margin:"0 0 4px",fontFamily:"Arial, sans-serif",fontWeight:500}}>Câu mẫu</p>
                 <p style={{color:C.terra,fontWeight:500,fontSize:17,margin:"0 0 2px"}}>{fb.example}</p>
                 <button onClick={()=>speak(fb.example)} style={{...btn(C.sand,C.charcoal,C.cream),fontSize:11,padding:"3px 10px",marginBottom:4,fontFamily:"Arial, sans-serif"}}>nghe</button>
@@ -548,7 +550,7 @@ function Review({weak,unmarkWeak}){
     const picked=shuffle(pool).slice(0,Math.min(type==="dialogue"?3:4,pool.length));
     const wl=picked.map(w=>`${w.h}(${w.m})`).join(", ");
     try{
-      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại ngắn 4 lượt A/B":"đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1000);
+      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại ngắn 4 lượt A/B":"đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1500);
       const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
       setContent(p);setMode("reading");
     }catch(e){console.log("Review error:",e);setMode("menu");}
