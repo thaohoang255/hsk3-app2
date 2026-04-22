@@ -498,11 +498,11 @@ Chỉ trả JSON:
         </div>
       )}
 
-      {step === 3 && fb && (
+{step === 3 && fb && (
         <div style={card}>
-          <div style={{ background: fb.score === "good" ? C.successBg : C.errorBg, border: `1px solid ${fb.score === "good" ? C.success : C.error}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>
-              {fb.score === "good" ? "Xuất sắc!" : "Cần cải thiện"}
+          <div style={{ background: fb.score === "good" ? C.successBg : fb.score === "ok" ? C.warningBg : C.errorBg, border: `1px solid ${fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
+            <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>
+              {fb.score === "good" ? "Xuất sắc!" : fb.score === "ok" ? "Khá ổn!" : "Cần cải thiện"}
             </p>
             <p style={{ color: C.charcoal, fontSize: 13, marginBottom: fb.example ? 10 : 0, fontFamily: "Arial, sans-serif" }}>{fb.comment}</p>
             {fb.fix && (
@@ -529,9 +529,6 @@ Chỉ trả JSON:
           <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>từ tiếp theo</button>
         </div>
       )}
-    </div>
-  );
-}
 
 // ── QUIZ ─────────────────────────────────────────────────────
 const TOTAL = 10;
@@ -751,15 +748,24 @@ function Review({ weak, unmarkWeak }) {
   const [userTrans, setUserTrans] = useState("");
   const [fb, setFb]             = useState(null);
   const [checking, setChecking] = useState(false);
+  const [showFb, setShowFb] = useState(false);
 
   const pool = weak.length >= 3
     ? weak
     : [...weak, ...W.filter(w => !weak.find(x => x.h === w.h)).slice(0, 6 - weak.length)];
 
   const generate = async () => {
-    setLoading(true); setMode("generate"); setShowTrans(false); setShowPin(false); setUserTrans(""); setFb(null);
-    const picked = shuffle(pool).slice(0, Math.min(type === "dialogue" ? 3 : 4, pool.length));
-    const wl = picked.map(w => `${w.h}(${w.m})`).join(", ");
+  setLoading(true); setMode("generate"); setShowTrans(false); setShowPin(false); setUserTrans(""); setFb(null);
+  
+  const needed = Math.min(type === "dialogue" ? 3 : 4, pool.length);
+  const weakPart = shuffle(weak).slice(0, needed);
+  const remaining = needed - weakPart.length;
+  const fillPart = remaining > 0
+    ? shuffle(W.filter(w => !weak.find(x => x.h === w.h))).slice(0, remaining)
+    : [];
+  const picked = [...weakPart, ...fillPart];
+  
+  const wl = picked.map(w => `${w.h}(${w.m})`).join(", ");
     try {
       const raw = await callAI(
         `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`,
@@ -775,11 +781,33 @@ function Review({ weak, unmarkWeak }) {
     setLoading(false);
   };
 
-  const checkTrans = async () => {
+const checkTrans = async () => {
+  if (fb) { setShowFb(v => !v); return; } // toggle nếu đã chấm rồi
+  if (!userTrans.trim()) return;
+  setChecking(true);
+  // ... phần còn lại giữ nguyên
+  setShowFb(true); // thêm dòng này trước setChecking(false)
+  setChecking(false);
+};
     if (!userTrans.trim()) return;
     setChecking(true);
     try {
-      const raw = await callAI(`HSK3. Gốc:"${content.chinese}". Chuẩn:"${content.vietnamese}". HS:"${userTrans}". JSON:{"score":"good/ok/bad","comment":"1-2 câu TV"}`);
+      const raw = await callAI(
+        `Bạn là giáo viên tiếng Trung chấm bài dịch cho học sinh Việt Nam học HSK3.
+
+Đoạn gốc tiếng Trung: "${content.chinese}"
+Bản dịch chuẩn tiếng Việt: "${content.vietnamese}"
+Bản dịch của học sinh: "${userTrans}"
+
+Yêu cầu chấm:
+- Học sinh dịch sang tiếng Việt thuần, KHÔNG yêu cầu dùng từ Hán Việt
+- "good": dịch đúng nghĩa, tự nhiên, dễ hiểu
+- "ok": hiểu đúng ý chính nhưng thiếu chi tiết hoặc hơi cứng
+- "bad": sai nghĩa hoặc bỏ sót ý quan trọng
+
+Chỉ trả JSON, không giải thích thêm:
+{"score":"good|ok|bad","comment":"1 câu tiếng Việt nhận xét ngắn gọn"}`
+      );
       const p = safeParse(raw);
       setFb(p || { score: "bad", comment: "⚠️ Lỗi phân tích." });
     } catch {
@@ -842,7 +870,7 @@ function Review({ weak, unmarkWeak }) {
           />
           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button onClick={() => setShowTrans(true)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>xem đáp án</button>
-            <button onClick={checkTrans} disabled={checking || !userTrans.trim()} style={{ flex: 1, ...btn(checking || !userTrans.trim() ? C.sand : C.terra, checking || !userTrans.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>{checking ? "đang chấm..." : "chấm bài"}</button>
+            <button onClick={checkTrans} disabled={checking || !userTrans.trim()} style={{ flex: 1, ...btn(checking || !userTrans.trim() ? C.sand : C.terra, checking || !userTrans.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>{checking ? "đang chấm..." : fb ? (showFb ? "ẩn kết quả" : "xem kết quả") : "chấm bài"}</button>
           </div>
         </div>
       )}
