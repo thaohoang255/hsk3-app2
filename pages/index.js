@@ -150,7 +150,7 @@ const getProgLabel = (prog,h) => {
   return {label:"cần ôn",bg:C.errorBg,fg:C.error};
 };
 
-async function callAI(prompt, maxTokens=800) {
+async function callAI(prompt, maxTokens=1500) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
