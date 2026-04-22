@@ -768,10 +768,10 @@ function Review({ weak, unmarkWeak }) {
     : [];
   const picked = [...weakPart, ...fillPart];
   
-  const wl = picked.map(w => `${w.h}(${w.m})`).join(", ");
+  const wl = picked.map(w => w.h).join(", ");
     try {
       const raw = await callAI(
-        `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`,
+        `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng: ${wl}. Pinyin phải chuẩn xác, không thêm âm thừa. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["chỉ chữ Hán, ví dụ: 菜单"]}`,
         1500
       );
       const p = safeParse(raw);
@@ -845,7 +845,10 @@ Chỉ trả JSON, không giải thích thêm:
   if (mode === "reading" && content) return (
     <div style={card}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-        {(content.words_used || []).map(w => <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{w}</span>)}
+        {(content.words_used || []).map(w => {
+  const hanzi = w.split(" ")[0];
+  return <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{hanzi}</span>;
+})}
       </div>
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 14, marginBottom: 12 }}>
         <p style={{ fontSize: 11, color: C.stone, fontWeight: 500, marginBottom: 8, fontFamily: "Arial, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>{type === "dialogue" ? "hội thoại" : "đoạn văn"}</p>
@@ -853,36 +856,40 @@ Chỉ trả JSON, không giải thích thêm:
         <button onClick={() => setShowPin(v => !v)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 11, marginTop: 8, fontFamily: "Arial, sans-serif" }}>{showPin ? "ẩn pinyin" : "xem pinyin"}</button>
         {showPin && <p style={{ color: C.stone, fontSize: 12, marginTop: 6, lineHeight: 1.7, whiteSpace: "pre-line", fontFamily: "Arial, sans-serif" }}>{content.pinyin}</p>}
       </div>
-      {!showTrans && (
-        <div style={{ marginBottom: 12 }}>
-          <p style={{ fontSize: 13, fontWeight: 500, color: C.charcoal, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>Dịch thử đi</p>
-          <textarea
-            value={userTrans}
-            onChange={e => setUserTrans(e.target.value)}
-            placeholder="Gõ bản dịch tiếng Việt..."
-            style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 13, outline: "none", resize: "none", boxSizing: "border-box", background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
-            rows={4}
-          />
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button onClick={() => setShowTrans(true)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>xem đáp án</button>
-            <button onClick={checkTrans} disabled={checking || !userTrans.trim()} style={{ flex: 1, ...btn(checking || !userTrans.trim() ? C.sand : C.terra, checking || !userTrans.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>{checking ? "đang chấm..." : fb ? (showFb ? "ẩn kết quả" : "xem kết quả") : "chấm bài"}</button>
-          </div>
+     <div style={{ marginBottom: 12 }}>
+        <p style={{ fontSize: 13, fontWeight: 500, color: C.charcoal, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>Dịch thử đi</p>
+        <textarea
+          value={userTrans}
+          onChange={e => setUserTrans(e.target.value)}
+          placeholder="Gõ bản dịch tiếng Việt..."
+          style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 13, outline: "none", resize: "none", boxSizing: "border-box", background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
+          rows={4}
+        />
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <button onClick={() => setShowTrans(v => !v)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>
+            {showTrans ? "ẩn đáp án" : "xem đáp án"}
+          </button>
+          <button onClick={checkTrans} disabled={checking || !userTrans.trim()} style={{ flex: 1, ...btn(checking || !userTrans.trim() ? C.sand : C.terra, checking || !userTrans.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
+            {checking ? "đang chấm..." : fb ? (showFb ? "ẩn kết quả" : "xem kết quả") : "chấm bài"}
+          </button>
         </div>
-      )}
-      {fb && !showTrans && (
+      </div>
+
+      {fb && showFb && (
         <div style={{ background: fb.score === "good" ? C.successBg : fb.score === "ok" ? C.warningBg : C.errorBg, border: `1px solid ${fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
-          <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>{fb.score === "good" ? "Dịch rất tốt!" : fb.score === "ok" ? "Khá tốt!" : "Cần cải thiện"}</p>
-          <p style={{ color: C.charcoal, fontSize: 13, marginBottom: 6, fontFamily: "Arial, sans-serif" }}>{fb.comment}</p>
-          <button onClick={() => setShowTrans(true)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 12, fontFamily: "Arial, sans-serif" }}>xem đáp án chuẩn</button>
+          <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>
+            {fb.score === "good" ? "Dịch rất tốt!" : fb.score === "ok" ? "Khá ổn!" : "Cần cải thiện"}
+          </p>
+          <p style={{ color: C.charcoal, fontSize: 13, margin: 0, fontFamily: "Arial, sans-serif" }}>{fb.comment}</p>
         </div>
       )}
+
       {showTrans && (
         <div style={{ background: C.successBg, border: `1px solid ${C.success}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <p style={{ fontSize: 11, fontWeight: 500, color: C.success, marginBottom: 6, fontFamily: "Arial, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>Bản dịch chuẩn</p>
           <p style={{ color: C.charcoal, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", margin: 0, fontFamily: "Arial, sans-serif" }}>{content.vietnamese}</p>
         </div>
-      )}
-      <div style={{ display: "flex", gap: 8 }}>
+      )}      <div style={{ display: "flex", gap: 8 }}>
         <button onClick={() => { setMode("menu"); setContent(null); }} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>← menu</button>
         <button onClick={generate} style={{ flex: 1, ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>bài mới</button>
       </div>
