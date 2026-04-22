@@ -742,55 +742,53 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
 
 // ── REVIEW ───────────────────────────────────────────────────
 function Review({ weak, unmarkWeak }) {
-  const [mode, setMode]         = useState("menu");
-  const [type, setType]         = useState("dialogue");
-  const [content, setContent]   = useState(null);
-  const [loading, setLoading]   = useState(false);
+  const [mode, setMode]           = useState("menu");
+  const [type, setType]           = useState("dialogue");
+  const [content, setContent]     = useState(null);
+  const [loading, setLoading]     = useState(false);
   const [showTrans, setShowTrans] = useState(false);
-  const [showPin, setShowPin]   = useState(false);
+  const [showPin, setShowPin]     = useState(false);
   const [userTrans, setUserTrans] = useState("");
-  const [fb, setFb]             = useState(null);
-  const [checking, setChecking] = useState(false);
-  const [showFb, setShowFb] = useState(false);
+  const [fb, setFb]               = useState(null);
+  const [checking, setChecking]   = useState(false);
+  const [showFb, setShowFb]       = useState(false);
 
   const pool = weak.length >= 3
     ? weak
     : [...weak, ...W.filter(w => !weak.find(x => x.h === w.h)).slice(0, 6 - weak.length)];
 
   const generate = async () => {
-  setLoading(true); setMode("generate"); setShowTrans(false); setShowPin(false); setUserTrans(""); setFb(null);
-  
-  const needed = Math.min(type === "dialogue" ? 3 : 4, pool.length);
-  const weakPart = shuffle(weak).slice(0, needed);
-  const remaining = needed - weakPart.length;
-  const fillPart = remaining > 0
-    ? shuffle(W.filter(w => !weak.find(x => x.h === w.h))).slice(0, remaining)
-    : [];
-  const picked = [...weakPart, ...fillPart];
-  
-  const wl = picked.map(w => w.h).join(", ");
+    setLoading(true); setMode("reading"); setShowTrans(false); setShowPin(false);
+    setUserTrans(""); setFb(null); setShowFb(false); setContent(null);
+    const needed = Math.min(type === "dialogue" ? 3 : 4, pool.length);
+    const weakPart = shuffle(weak).slice(0, needed);
+    const remaining = needed - weakPart.length;
+    const fillPart = remaining > 0
+      ? shuffle(W.filter(w => !weak.find(x => x.h === w.h))).slice(0, remaining)
+      : [];
+    const picked = [...weakPart, ...fillPart];
+    const wl = picked.map(w => w.h).join(", ");
     try {
       const raw = await callAI(
-        `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng: ${wl}. Pinyin phải chuẩn xác, không thêm âm thừa. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["chỉ chữ Hán, ví dụ: 菜单"]}`,
+        `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng: ${wl}. Pinyin phải chuẩn xác, không thêm âm thừa. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["chỉ chữ Hán"]}`,
         1500
       );
       const p = safeParse(raw);
       if (!p) throw new Error("Parse fail");
       setContent(p);
-      setMode("reading");
     } catch {
       setMode("menu");
     }
     setLoading(false);
   };
 
-const checkTrans = async () => {
-  if (fb) { setShowFb(v => !v); return; }
-  if (!userTrans.trim()) return;
-  setChecking(true);
-  try {
-    const raw = await callAI(
-      `Bạn là giáo viên tiếng Trung chấm bài dịch cho học sinh Việt Nam học HSK3.
+  const checkTrans = async () => {
+    if (fb) { setShowFb(v => !v); return; }
+    if (!userTrans.trim()) return;
+    setChecking(true);
+    try {
+      const raw = await callAI(
+        `Bạn là giáo viên tiếng Trung chấm bài dịch cho học sinh Việt Nam học HSK3.
 Đoạn gốc tiếng Trung: "${content.chinese}"
 Bản dịch chuẩn tiếng Việt: "${content.vietnamese}"
 Bản dịch của học sinh: "${userTrans}"
@@ -801,16 +799,18 @@ Yêu cầu chấm:
 - "bad": sai nghĩa hoặc bỏ sót ý quan trọng
 Chỉ trả JSON, không giải thích thêm:
 {"score":"good|ok|bad","comment":"1 câu tiếng Việt nhận xét ngắn gọn"}`
-    );
-    const p = safeParse(raw);
-    setFb(p || { score: "bad", comment: "⚠️ Lỗi phân tích." });
-    setShowFb(true);
-  } catch {
-    setFb({ score: "bad", comment: "⚠️ Lỗi kết nối." });
-    setShowFb(true);
-  }
-  setChecking(false);
-};
+      );
+      const p = safeParse(raw);
+      setFb(p || { score: "bad", comment: "⚠️ Lỗi phân tích." });
+      setShowFb(true);
+    } catch {
+      setFb({ score: "bad", comment: "⚠️ Lỗi kết nối." });
+      setShowFb(true);
+    }
+    setChecking(false);
+  };
+
+  // ── MENU ──
   if (mode === "menu") return (
     <div style={card}>
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 12, marginBottom: 14 }}>
@@ -836,27 +836,33 @@ Chỉ trả JSON, không giải thích thêm:
     </div>
   );
 
-  if (loading) return (
+  // ── LOADING ──
+  if (loading || !content) return (
     <div style={{ ...card, textAlign: "center", padding: 40 }}>
       <p style={{ color: C.stone, fontFamily: "Arial, sans-serif" }}>Đang tạo bài...</p>
     </div>
   );
 
-  if (mode === "reading" && content) return (
+  // ── READING ──
+  return (
     <div style={card}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
         {(content.words_used || []).map(w => {
-  const hanzi = w.split(" ")[0];
-  return <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{hanzi}</span>;
-})}
+          const hanzi = w.split(" ")[0];
+          return <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{hanzi}</span>;
+        })}
       </div>
+
+      {/* Chữ Hán + pinyin */}
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 14, marginBottom: 12 }}>
         <p style={{ fontSize: 11, color: C.stone, fontWeight: 500, marginBottom: 8, fontFamily: "Arial, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>{type === "dialogue" ? "hội thoại" : "đoạn văn"}</p>
-        <p style={{ color: C.nearBlack, lineHeight: 1.7, fontSize: 15, whiteSpace: "pre-line", margin: 0 }}>{content.chinese}</p>
-        <button onClick={() => setShowPin(v => !v)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 11, marginTop: 8, fontFamily: "Arial, sans-serif" }}>{showPin ? "ẩn pinyin" : "xem pinyin"}</button>
-        {showPin && <p style={{ color: C.stone, fontSize: 12, marginTop: 6, lineHeight: 1.7, whiteSpace: "pre-line", fontFamily: "Arial, sans-serif" }}>{content.pinyin}</p>}
+        <p style={{ color: C.nearBlack, lineHeight: 1.7, fontSize: 15, whiteSpace: "pre-line", margin: "0 0 10px" }}>{content.chinese}</p>
+        <button onClick={() => setShowPin(v => !v)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 11, fontFamily: "Arial, sans-serif" }}>{showPin ? "ẩn pinyin" : "xem pinyin"}</button>
+        {showPin && <p style={{ color: C.stone, fontSize: 12, marginTop: 8, lineHeight: 1.7, whiteSpace: "pre-line", fontFamily: "Arial, sans-serif" }}>{content.pinyin}</p>}
       </div>
-     <div style={{ marginBottom: 12 }}>
+
+      {/* Ô dịch — luôn hiển thị, readOnly sau khi chấm */}
+      <div style={{ marginBottom: 12 }}>
         <p style={{ fontSize: 13, fontWeight: 500, color: C.charcoal, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>Dịch thử đi</p>
         <textarea
           value={userTrans}
@@ -870,12 +876,13 @@ Chỉ trả JSON, không giải thích thêm:
           <button onClick={() => setShowTrans(v => !v)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>
             {showTrans ? "ẩn đáp án" : "xem đáp án"}
           </button>
-          <button onClick={checkTrans} disabled={checking || (!fb && !userTrans.trim())} style={{ flex: 1, ...btn(checking || !userTrans.trim() ? C.sand : C.terra, checking || !userTrans.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
+          <button onClick={checkTrans} disabled={checking || (!fb && !userTrans.trim())} style={{ flex: 1, ...btn(checking || (!fb && !userTrans.trim()) ? C.sand : C.terra, checking || (!fb && !userTrans.trim()) ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
             {checking ? "đang chấm..." : fb ? (showFb ? "ẩn kết quả" : "xem kết quả") : "chấm bài"}
           </button>
         </div>
       </div>
 
+      {/* Kết quả chấm */}
       {fb && showFb && (
         <div style={{ background: fb.score === "good" ? C.successBg : fb.score === "ok" ? C.warningBg : C.errorBg, border: `1px solid ${fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>
@@ -885,17 +892,18 @@ Chỉ trả JSON, không giải thích thêm:
         </div>
       )}
 
+      {/* Đáp án chuẩn */}
       {showTrans && (
         <div style={{ background: C.successBg, border: `1px solid ${C.success}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <p style={{ fontSize: 11, fontWeight: 500, color: C.success, marginBottom: 6, fontFamily: "Arial, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>Bản dịch chuẩn</p>
           <p style={{ color: C.charcoal, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", margin: 0, fontFamily: "Arial, sans-serif" }}>{content.vietnamese}</p>
         </div>
-      )}      <div style={{ display: "flex", gap: 8 }}>
+      )}
+
+      <div style={{ display: "flex", gap: 8 }}>
         <button onClick={() => { setMode("menu"); setContent(null); }} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>← menu</button>
         <button onClick={generate} style={{ flex: 1, ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>bài mới</button>
       </div>
     </div>
   );
-
-  return null;
 }
