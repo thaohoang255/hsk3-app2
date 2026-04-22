@@ -785,40 +785,32 @@ function Review({ weak, unmarkWeak }) {
   };
 
 const checkTrans = async () => {
-  if (fb) { setShowFb(v => !v); return; } // toggle nếu đã chấm rồi
+  if (fb) { setShowFb(v => !v); return; }
   if (!userTrans.trim()) return;
   setChecking(true);
-  // ... phần còn lại giữ nguyên
-  setShowFb(true); // thêm dòng này trước setChecking(false)
-  setChecking(false);
-};
-    if (!userTrans.trim()) return;
-    setChecking(true);
-    try {
-      const raw = await callAI(
-        `Bạn là giáo viên tiếng Trung chấm bài dịch cho học sinh Việt Nam học HSK3.
-
+  try {
+    const raw = await callAI(
+      `Bạn là giáo viên tiếng Trung chấm bài dịch cho học sinh Việt Nam học HSK3.
 Đoạn gốc tiếng Trung: "${content.chinese}"
 Bản dịch chuẩn tiếng Việt: "${content.vietnamese}"
 Bản dịch của học sinh: "${userTrans}"
-
 Yêu cầu chấm:
 - Học sinh dịch sang tiếng Việt thuần, KHÔNG yêu cầu dùng từ Hán Việt
 - "good": dịch đúng nghĩa, tự nhiên, dễ hiểu
 - "ok": hiểu đúng ý chính nhưng thiếu chi tiết hoặc hơi cứng
 - "bad": sai nghĩa hoặc bỏ sót ý quan trọng
-
 Chỉ trả JSON, không giải thích thêm:
 {"score":"good|ok|bad","comment":"1 câu tiếng Việt nhận xét ngắn gọn"}`
-      );
-      const p = safeParse(raw);
-      setFb(p || { score: "bad", comment: "⚠️ Lỗi phân tích." });
-    } catch {
-      setFb({ score: "bad", comment: "⚠️ Lỗi kết nối." });
-    }
-    setChecking(false);
-  };
-
+    );
+    const p = safeParse(raw);
+    setFb(p || { score: "bad", comment: "⚠️ Lỗi phân tích." });
+    setShowFb(true);
+  } catch {
+    setFb({ score: "bad", comment: "⚠️ Lỗi kết nối." });
+    setShowFb(true);
+  }
+  setChecking(false);
+};
   if (mode === "menu") return (
     <div style={card}>
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 12, marginBottom: 14 }}>
