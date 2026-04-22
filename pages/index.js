@@ -529,6 +529,8 @@ Chỉ trả JSON:
           <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>từ tiếp theo</button>
         </div>
       )}
+  );
+}
 
 // ── QUIZ ─────────────────────────────────────────────────────
 const TOTAL = 10;
