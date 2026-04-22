@@ -12,8 +12,7 @@ export default async function handler(req, res) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        // Đây là bản Haiku mới nhất, nhanh hơn Sonnet và khôn hơn Haiku cũ
-        model: "claude-3-5-haiku-20241022", 
+        model: "claude-haiku-4-5-20251001", 
         max_tokens,
         messages,
       }),
