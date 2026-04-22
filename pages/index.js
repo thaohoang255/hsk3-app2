@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 
-// --- DỮ LIỆU TỪ VỰNG  ---
 const W = [
   {h:"万",p:"wàn",m:"mười nghìn",c:"Số đếm"},{h:"半",p:"bàn",m:"một nửa",c:"Số đếm"},
   {h:"自己",p:"zìjǐ",m:"bản thân mình",c:"Đại từ"},{h:"大家",p:"dàjiā",m:"mọi người",c:"Đại từ"},
@@ -17,7 +16,7 @@ const W = [
   {h:"服务员",p:"fúwùyuán",m:"nhân viên phục vụ",c:"Con người"},{h:"经理",p:"jīnglǐ",m:"giám đốc",c:"Con người"},
   {h:"身体",p:"shēntǐ",m:"cơ thể, sức khỏe",c:"Cơ thể"},{h:"脸",p:"liǎn",m:"mặt, khuôn mặt",c:"Cơ thể"},
   {h:"眼睛",p:"yǎnjīng",m:"mắt",c:"Cơ thể"},{h:"耳朵",p:"ěrduo",m:"tai",c:"Cơ thể"},
-  {h:"鼻子",p:"bízi",m:"mùi",c:"Cơ thể"},{h:"头发",p:"tóufa",m:"tóc",c:"Cơ thể"},
+  {h:"鼻子",p:"bízi",m:"mũi",c:"Cơ thể"},{h:"头发",p:"tóufa",m:"tóc",c:"Cơ thể"},
   {h:"腿",p:"tuǐ",m:"chân (đùi)",c:"Cơ thể"},{h:"脚",p:"jiǎo",m:"bàn chân",c:"Cơ thể"},
   {h:"牛奶",p:"niúnǎi",m:"sữa bò",c:"Đồ ăn"},{h:"面包",p:"miànbāo",m:"bánh mì",c:"Đồ ăn"},
   {h:"蛋糕",p:"dàngāo",m:"bánh kem",c:"Đồ ăn"},{h:"米饭",p:"mǐfàn",m:"cơm",c:"Đồ ăn"},
@@ -26,11 +25,11 @@ const W = [
   {h:"西瓜",p:"xīguā",m:"dưa hấu",c:"Đồ ăn"},{h:"啤酒",p:"píjiǔ",m:"bia",c:"Đồ ăn"},
   {h:"衬衫",p:"chènshān",m:"áo sơ mi",c:"Quần áo"},{h:"裤子",p:"kùzi",m:"quần",c:"Quần áo"},
   {h:"裙子",p:"qúnzi",m:"váy",c:"Quần áo"},{h:"帽子",p:"màozi",m:"mũ",c:"Quần áo"},
-  {h:"眼鏡",p:"yǎnjìng",m:"kính mắt",c:"Quần áo"},
+  {h:"眼镜",p:"yǎnjìng",m:"kính mắt",c:"Quần áo"},
   {h:"作业",p:"zuòyè",m:"bài tập về nhà",c:"Học tập"},{h:"考试",p:"kǎoshì",m:"kỳ thi",c:"Học tập"},
   {h:"成绩",p:"chéngjì",m:"thành tích, điểm số",c:"Học tập"},{h:"水平",p:"shuǐpíng",m:"trình độ",c:"Học tập"},
   {h:"图书馆",p:"túshūguǎn",m:"thư viện",c:"Địa điểm"},{h:"办公室",p:"bàngōngshì",m:"văn phòng",c:"Địa điểm"},
-  {h:"饭馆",p:"fànguǎn",m:"nhà hàng",c:"Địa điểm"},{h:"宾館",p:"bīngguǎn",m:"khách sạn",c:"Địa điểm"},
+  {h:"饭馆",p:"fànguǎn",m:"nhà hàng",c:"Địa điểm"},{h:"宾馆",p:"bīngguǎn",m:"khách sạn",c:"Địa điểm"},
   {h:"超市",p:"chāoshì",m:"siêu thị",c:"Địa điểm"},{h:"火车站",p:"huǒchēzhàn",m:"ga tàu hỏa",c:"Địa điểm"},
   {h:"附近",p:"fùjìn",m:"gần đây",c:"Hướng"},{h:"前面",p:"qiánmiàn",m:"phía trước",c:"Hướng"},
   {h:"后面",p:"hòumiàn",m:"phía sau",c:"Hướng"},{h:"中间",p:"zhōngjiān",m:"ở giữa",c:"Hướng"},
@@ -38,7 +37,7 @@ const W = [
   {h:"参加",p:"cānjiā",m:"tham gia",c:"Động từ"},{h:"帮助",p:"bāngzhù",m:"giúp đỡ",c:"Động từ"},
   {h:"出现",p:"chūxiàn",m:"xuất hiện",c:"Động từ"},{h:"打算",p:"dǎsuàn",m:"dự định",c:"Động từ"},
   {h:"担心",p:"dānxīn",m:"lo lắng",c:"Động từ"},{h:"发现",p:"fāxiàn",m:"phát hiện",c:"Động từ"},
-  {h:"复习",p:"fùxí",m:"ôn tập",c:"Động từ"},{h:" Trang",p:"juédìng",m:"quyết định",c:"Động từ"},
+  {h:"复习",p:"fùxí",m:"ôn tập",c:"Động từ"},{h:"决定",p:"juédìng",m:"quyết định",c:"Động từ"},
   {h:"解决",p:"jiějué",m:"giải quyết",c:"Động từ"},{h:"介绍",p:"jièshào",m:"giới thiệu",c:"Động từ"},
   {h:"了解",p:"liǎojiě",m:"hiểu rõ",c:"Động từ"},{h:"离开",p:"líkāi",m:"rời đi",c:"Động từ"},
   {h:"满意",p:"mǎnyì",m:"hài lòng",c:"Động từ"},{h:"努力",p:"nǔlì",m:"cố gắng",c:"Động từ"},
@@ -67,22 +66,37 @@ const W = [
   {h:"关于",p:"guānyú",m:"về, liên quan đến",c:"Giới từ"},{h:"为了",p:"wèile",m:"vì (mục đích)",c:"Giới từ"},
 ];
 
+// ── COLORS (Anthropic-inspired) ──────────────────────────────
 const C = {
-  parchment: "#f5f4ed", ivory: "#faf9f5", terra: "#c96442", terraLight:"#f5ece7",
-  nearBlack: "#141413", charcoal: "#4d4c48", olive: "#5e5d59", stone: "#87867f",
-  sand: "#e8e6dc", cream: "#f0eee6", warmSilver:"#b0aea5", success: "#3b6d11",
-  successBg: "#eaf3de", error: "#993c1d", errorBg: "#faece7", warning: "#854f0b", warningBg: "#faeeda",
+  parchment: "#f5f4ed",
+  ivory:     "#faf9f5",
+  terra:     "#c96442",
+  terraLight:"#f5ece7",
+  nearBlack: "#141413",
+  charcoal:  "#4d4c48",
+  olive:     "#5e5d59",
+  stone:     "#87867f",
+  sand:      "#e8e6dc",
+  cream:     "#f0eee6",
+  warmSilver:"#b0aea5",
+  darkSurf:  "#30302e",
+  success:   "#3b6d11",
+  successBg: "#eaf3de",
+  error:     "#993c1d",
+  errorBg:   "#faece7",
+  warning:   "#854f0b",
+  warningBg: "#faeeda",
 };
 
-// --- SHARED LOGIC ---
+// ── UTILS ────────────────────────────────────────────────────
 const shuffle = a => [...a].sort(() => Math.random() - 0.5);
 const getWrong = (w, all) => shuffle(all.filter(x => x.h !== w.h)).slice(0, 3);
 const CATS = ["Tất cả", ...Array.from(new Set(W.map(w => w.c)))];
 const TONES = [
-  {t:"1",mark:"ˉ",bg:"#e6f1fb",fg:"#185fa5",label:"Thanh 1"},
-  {t:"2",mark:"ˊ",bg:"#eaf3de",fg:"#3b6d11",label:"Thanh 2"},
-  {t:"3",mark:"ˇ",bg:"#faeeda",fg:"#854f0b",label:"Thanh 3"},
-  {t:"4",mark:"ˋ",bg:"#faece7",fg:"#993c1d",label:"Thanh 4"},
+  {t:"1",mark:"ˉ",bg:"#e6f1fb",fg:"#185fa5",label:"Thanh 1 — ngang cao"},
+  {t:"2",mark:"ˊ",bg:"#eaf3de",fg:"#3b6d11",label:"Thanh 2 — lên"},
+  {t:"3",mark:"ˇ",bg:"#faeeda",fg:"#854f0b",label:"Thanh 3 — xuống rồi lên"},
+  {t:"4",mark:"ˋ",bg:"#faece7",fg:"#993c1d",label:"Thanh 4 — xuống nhanh"},
   {t:"5",mark:"·",bg:C.sand,fg:C.olive,label:"Thanh nhẹ"},
 ];
 const getTone = p => {
@@ -92,343 +106,526 @@ const getTone = p => {
   if (/[àèìòùǜ]/.test(p)) return TONES[3];
   return TONES[4];
 };
-
 const speak = text => {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "zh-CN"; u.rate = 0.85;
+  const zh = window.speechSynthesis.getVoices().find(v => v.lang.startsWith("zh"));
+  if (zh) u.voice = zh;
   window.speechSynthesis.speak(u);
 };
-
 const normPin = s => s.toLowerCase()
   .replace(/[āáǎà]/g,"a").replace(/[ēéěè]/g,"e").replace(/[īíǐì]/g,"i")
   .replace(/[ōóǒò]/g,"o").replace(/[ūúǔù]/g,"u").replace(/[ǖǘǚǜ]/g,"u")
   .replace(/[-\s]/g,"");
 
-async function callAI(prompt) {
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [{ role: "user", content: prompt }] }),
-    });
-    const data = await res.json();
-    let text = data?.content?.[0]?.text || "";
-    const m = text.match(/\{[\s\S]*\}/);
-    if (!m) return null;
-    let s = m[0];
-    const open = (s.match(/\{/g) || []).length;
-    const close = (s.match(/\}/g) || []).length;
-    if (open > close) s += (s.endsWith('"') ? "" : '"') + "}".repeat(open - close);
-    return JSON.parse(s);
-  } catch (e) { return null; }
-}
-
+// ── SPACED REPETITION ────────────────────────────────────────
+const loadProg = async () => {
+  try { const r = await window.storage.get("hsk3_prog"); return r ? JSON.parse(r.value) : {}; }
+  catch { return {}; }
+};
+const saveProg = async p => { try { await window.storage.set("hsk3_prog", JSON.stringify(p)); } catch {} };
+const updateProg = (prog, hanzi, correct) => {
+  const cur = prog[hanzi] || {score:0,seen:0,correct:0};
+  return {...prog,[hanzi]:{score:correct?Math.min(cur.score+1,10):Math.max(cur.score-1,0),seen:cur.seen+1,correct:cur.correct+(correct?1:0)}};
+};
 const weightedPick = (words, prog) => {
-  const weights = words.map(w => {
-    const s = prog[w.h] ? prog[w.h].score : -1;
-    if (s === -1) return 10;
-    if (s <= 2) return 8;
-    if (s <= 5) return 3;
-    return 0.5;
-  });
-  const total = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < words.length; i++) {
-    r -= weights[i];
-    if (r <= 0) return i;
-  }
-  return 0;
+  const weights = words.map(w => { const s = prog[w.h]?prog[w.h].score:-1; return s<0?10:s<=2?8:s<=5?4:1; });
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for (let i=0;i<words.length;i++){r-=weights[i];if(r<=0)return i;}
+  return words.length-1;
+};
+const getStats = (words,prog) => ({
+  mastered:words.filter(w=>(prog[w.h]?prog[w.h].score:-1)>=6).length,
+  learning:words.filter(w=>{const s=prog[w.h]?prog[w.h].score:-1;return s>=0&&s<6;}).length,
+  unseen:words.filter(w=>!prog[w.h]).length,
+});
+const getProgLabel = (prog,h) => {
+  if (!prog[h]) return {label:"chưa học",bg:C.sand,fg:C.olive};
+  const s=prog[h].score;
+  if (s>=6) return {label:"đã thuộc",bg:C.successBg,fg:C.success};
+  if (s>=3) return {label:"đang học",bg:C.warningBg,fg:C.warning};
+  return {label:"cần ôn",bg:C.errorBg,fg:C.error};
 };
 
-const pill = (bg,fg)=>({background:bg,color:fg,borderRadius:999,padding:"2px 10px",fontSize:11,fontWeight:500,display:"inline-block"});
+async function callAI(prompt, maxTokens=1000) {
+  const res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:maxTokens,messages:[{role:"user",content:prompt}]})
+  });
+  const data = await res.json();
+  const text = data?.content?.[0]?.text||"";
+  const m = text.match(/\{[\s\S]*\}/);
+  return m?m[0]:text;
+}
+
+// ── SHARED STYLES ────────────────────────────────────────────
+const card = {background:C.ivory,border:`1px solid ${C.cream}`,borderRadius:12,padding:"16px"};
 const btn = (bg,fg,border)=>({background:bg,color:fg,border:`1px solid ${border||bg}`,borderRadius:8,padding:"7px 14px",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"});
+const pill = (bg,fg)=>({background:bg,color:fg,borderRadius:999,padding:"2px 10px",fontSize:11,fontWeight:500,display:"inline-block"});
 
-// --- MAIN APP ---
+// ── APP ──────────────────────────────────────────────────────
 export default function App() {
-  const [tab, setTab] = useState("flashcard");
-  const [cat, setCat] = useState("Tất cả");
-  const [prog, setProg] = useState({});
-  const [weak, setWeak] = useState([]);
-  const [streak, setStreak] = useState(0);
-
-  useEffect(() => {
-    const p = localStorage.getItem("hsk3_prog_v4");
-    if (p) setProg(JSON.parse(p));
-    const w = localStorage.getItem("hsk3_weak_v4");
-    if (w) setWeak(JSON.parse(w));
-  }, []);
-
-  const saveProg = (newP) => {
-    setProg(newP);
-    localStorage.setItem("hsk3_prog_v4", JSON.stringify(newP));
-  };
-
-  const recordAnswer = (hanzi, isCorrect) => {
-    const cur = prog[hanzi] || { score: 0, seen: 0 };
-    const newP = { ...prog, [hanzi]: { 
-      score: isCorrect ? Math.min(cur.score + 1, 10) : Math.max(cur.score - 2, 0),
-      seen: cur.seen + 1
-    }};
-    saveProg(newP);
-  };
-
-  const markWeak = (w, note = "") => {
-    if (weak.find(x => x.h === w.h)) return;
-    const newW = [...weak, { ...w, note }];
-    setWeak(newW);
-    localStorage.setItem("hsk3_weak_v4", JSON.stringify(newW));
-  };
-
-  const unmarkWeak = (h) => {
-    const newW = weak.filter(x => x.h !== h);
-    setWeak(newW);
-    localStorage.setItem("hsk3_weak_v4", JSON.stringify(newW));
-  };
-
-  const words = cat === "Tất cả" ? W : W.filter(w => w.c === cat);
-  const mastered = words.filter(w => (prog[w.h]?.score || 0) >= 6).length;
-  const learning = words.filter(w => (prog[w.h]?.score || 0) > 0 && (prog[w.h]?.score || 0) < 6).length;
-  const unseen = words.length - mastered - learning;
+  const [tab,setTab]=useState("flashcard");
+  const [weak,setWeak]=useState([]);
+  const [streak,setStreak]=useState(0);
+  const [cat,setCat]=useState("Tất cả");
+  const [prog,setProg]=useState({});
+  useEffect(()=>{loadProg().then(p=>setProg(p));},[]);
+  const words=cat==="Tất cả"?W:W.filter(w=>w.c===cat);
+  const markWeak=(w,note="")=>setWeak(p=>p.find(x=>x.h===w.h)?p:[...p,{...w,note}]);
+  const unmarkWeak=h=>setWeak(p=>p.filter(w=>w.h!==h));
+  const recordAnswer=(hanzi,correct)=>{const np=updateProg(prog,hanzi,correct);setProg(np);saveProg(np);};
+  const stats=getStats(words,prog);
+  const pct=words.length?Math.round((stats.mastered/words.length)*100):0;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.parchment, padding: "40px 16px", display: "flex", justifyContent: "center" }}>
-      <div style={{ width: "100%", maxWidth: 620, fontFamily: "Georgia, serif" }}>
-        
-        {/* Progress Header */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-            <div>
-              <h1 style={{ fontSize: 28, margin: 0, color: C.nearBlack }}>漢語 HSK3</h1>
-              <p style={{ fontSize: 13, color: C.stone, margin: "4px 0" }}>{W.length} từ vựng · {Math.round((mastered/W.length)*100)}% đã thuộc</p>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <span style={pill(C.warningBg, C.warning)}>🔥 {streak}</span>
-              <span style={pill(C.errorBg, C.error)}>⚑ {weak.length}</span>
-            </div>
-          </div>
-          <div style={{ height: 4, background: C.sand, borderRadius: 999, overflow: "hidden", marginBottom: 4 }}>
-            <div style={{ display: "flex", height: "100%" }}>
-              <div style={{ width: `${(mastered/words.length)*100}%`, background: C.terra, transition: "0.5s" }} />
-              <div style={{ width: `${(learning/words.length)*100}%`, background: "#d97757", transition: "0.5s" }} />
-            </div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.stone, fontFamily: "Arial" }}>
-            <span>{unseen} chưa học</span>
-            <span>{learning} đang học</span>
-            <span>{mastered} đã thuộc</span>
-          </div>
-        </div>
+    <div style={{minHeight:"100vh",background:C.parchment,fontFamily:"Georgia, serif",padding:"40px 16px",display:"flex",alignItems:"flex-start",justifyContent:"center"}}>
+      <div style={{width:"100%",maxWidth:620}}>
 
-        {/* Category Filter */}
-        <div style={{ overflowX: "auto", display: "flex", gap: 6, paddingBottom: 10, marginBottom: 15 }}>
-          {CATS.map(c => (
-            <button key={c} onClick={() => setCat(c)} style={{
-              ...pill(cat === c ? C.terra : C.sand, cat === c ? "#fff" : C.charcoal),
-              border: "none", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "Arial"
-            }}>{c}</button>
-          ))}
+        {/* Header */}
+        <div style={{marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+            <div>
+              <h1 style={{fontSize:28,fontWeight:500,color:C.nearBlack,margin:0,letterSpacing:"-0.3px"}}>
+                漢語水平考試 HSK3
+              </h1>
+              <p style={{fontSize:13,color:C.stone,margin:"4px 0 0",fontFamily:"Arial, sans-serif"}}>
+                {W.length} từ vựng · {pct}% đã thuộc
+              </p>
+            </div>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <span style={{...pill(C.warningBg,C.warning),fontFamily:"Arial, sans-serif"}}>🔥 {streak}</span>
+              <span style={{...pill(C.errorBg,C.error),fontFamily:"Arial, sans-serif"}}>⚑ {weak.length}</span>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div style={{marginBottom:10}}>
+            <div style={{height:4,background:C.sand,borderRadius:999,overflow:"hidden"}}>
+              <div style={{display:"flex",height:"100%"}}>
+                <div style={{width:`${(stats.mastered/words.length)*100}%`,background:C.terra,transition:"width 0.5s"}}/>
+                <div style={{width:`${(stats.learning/words.length)*100}%`,background:"#d97757",transition:"width 0.5s"}}/>
+              </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontFamily:"Arial, sans-serif",fontSize:11,color:C.stone}}>
+              <span>{stats.unseen} chưa học</span>
+              <span>{stats.learning} đang học</span>
+              <span>{stats.mastered} đã thuộc</span>
+            </div>
+          </div>
+
+          {/* Category filter */}
+          <div style={{overflowX:"auto",paddingBottom:4}}>
+            <div style={{display:"flex",gap:6,width:"max-content"}}>
+              {CATS.map(c=>(
+                <button key={c} onClick={()=>setCat(c)} style={{...pill(cat===c?C.terra:C.sand,cat===c?C.ivory:C.charcoal),border:"none",cursor:"pointer",whiteSpace:"nowrap",fontFamily:"Arial, sans-serif",fontSize:11,fontWeight:500,padding:"3px 10px"}}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", background: C.sand, borderRadius: 10, padding: 3, marginBottom: 20 }}>
-          {[["flashcard", "📖 Học"], ["quiz", "🧩 Quiz"], ["review", "⚑ Ôn tập"]].map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k)} style={{
-              flex: 1, padding: 8, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12,
-              background: tab === k ? "#fff" : "transparent", color: tab === k ? C.nearBlack : C.olive,
-              fontWeight: tab === k ? "bold" : "normal", fontFamily: "Arial"
-            }}>{l}</button>
-          ))}
-        </div>
+          <div style={{background:C.sand,borderRadius:10,padding:3,marginBottom:16,display:"flex",gap:3}}>
+            {[["flashcard","📖 Học"],["quiz","🧩 Quiz"],["review","⚑ Ôn lại"]].map(([k,l])=>(
+              <button key={k} onClick={()=>setTab(k)} style={{flex:1,padding:"7px 4px",borderRadius:8,fontSize:12,fontWeight:500,border:"none",cursor:"pointer",fontFamily:"Arial, sans-serif",background:tab===k?C.ivory:C.sand,color:tab===k?C.nearBlack:C.olive,transition:"all 0.15s"}}>
+                {l}
+              </button>
+            ))}
+          </div>
 
         {/* Content */}
-        {tab === "flashcard" && <Flashcard words={words} prog={prog} recordAnswer={recordAnswer} markWeak={markWeak} setStreak={setStreak} />}
-        {tab === "quiz" && <Quiz words={words} recordAnswer={recordAnswer} setStreak={setStreak} />}
-        {tab === "review" && <Review weak={weak} unmarkWeak={unmarkWeak} />}
+                  <div style={{padding:"24px 24px"}}>
+          {tab==="flashcard"&&<Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer}/>}
+          {tab==="quiz"&&<Quiz words={words} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer}/>}
+          {tab==="review"&&<Review weak={weak} unmarkWeak={unmarkWeak}/>}
+        </div>
       </div>
     </div>
   );
 }
 
-// --- FLASHCARD ---
-function Flashcard({ words, prog, recordAnswer, markWeak, setStreak }) {
-  const [idx, setIdx] = useState(() => weightedPick(words, prog));
-  const [step, setStep] = useState(0); 
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [fb, setFb] = useState(null);
-  const [showP, setShowP] = useState(false);
-  const [showM, setShowM] = useState(false);
-
-  const w = words[idx];
-  const tone = getTone(w.p);
-
-  const handleCheck = async () => {
-    if (!input.trim()) return;
+// ── FLASHCARD ────────────────────────────────────────────────
+function Flashcard({words,weak,markWeak,unmarkWeak,setStreak,prog,recordAnswer}) {
+  const [idx,setIdx]=useState(()=>weightedPick(words,prog));
+  const [step,setStep]=useState(0);
+  const [showP,setShowP]=useState(false);
+  const [showM,setShowM]=useState(false);
+  const [sent,setSent]=useState("");
+  const [fb,setFb]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [speaking,setSpeaking]=useState(false);
+  const [pron,setPron]=useState(null);
+  useEffect(()=>{setIdx(weightedPick(words,prog));},[words]);
+  const w=words[idx]||words[0];
+  const isWeak=weak.find(x=>x.h===w.h);
+  const tone=getTone(w.p||"");
+  const pl=getProgLabel(prog,w.h);
+  const next=()=>{setIdx(weightedPick(words,prog));setStep(0);setShowP(false);setShowM(false);setSent("");setFb(null);setPron(null);setSpeaking(false);};
+  const doSpeak=()=>{setSpeaking(true);speak(w.h);setTimeout(()=>setSpeaking(false),1800);};
+  const check=async()=>{
+    if(!sent.trim())return;
     setLoading(true);
-    const res = await callAI(`GV HSK3. Chấm câu dùng từ "${w.h}". Câu HS: "${input}". 
-    JSON:{"score":"good/bad","ana":"nhận xét lỗi sai & độ tự nhiên","fix":"câu sửa lại tự nhiên nhất","pin":"pinyin câu sửa","vi":"nghĩa câu sửa","ex":"ví dụ khác dùng từ ${w.h}"}`);
-    if (res) {
-      setFb(res);
-      setStep(2);
-      recordAnswer(w.h, res.score === "good");
-      setStreak(s => res.score === "good" ? s + 1 : 0);
-      if (res.score === "bad") markWeak(w, res.ana);
-    }
+    try{
+      const raw=await callAI(`Giáo viên HSK3. Từ: "${w.h}"(${w.p}=${w.m}). Câu HS: "${sent}". Trả JSON: {"score":"good/bad","correct_usage":"ngữ pháp đúng/sai ngắn gọn","meaning_ok":"tự nhiên không","comment":"1 câu TV","example":"câu mẫu ĐÚNG có dùng từ ${w.h}","ex_pinyin":"pinyin","ex_vi":"nghĩa TV"}`);
+      const p=JSON.parse(raw);
+      setFb(p);setStep(3);setStreak(s=>s+1);
+      recordAnswer(w.h,p.score==="good");
+      if(p.score==="bad")markWeak(w,p.comment);
+    }catch{setFb({score:"bad",comment:"⚠️ Lỗi kết nối",example:"",ex_pinyin:"",ex_vi:""});setStep(3);}
     setLoading(false);
   };
-
-  const next = () => {
-    setIdx(weightedPick(words, prog));
-    setStep(0); setInput(""); setFb(null); setShowP(false); setShowM(false);
-  };
-
-  return (
-    <div style={{ background: C.ivory, padding: 24, borderRadius: 12, border: `1px solid ${C.cream}` }}>
-      {step === 0 && (
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 80, color: C.terra, marginBottom: 10 }}>{w.h}</div>
-          <div style={{ marginBottom: 20 }}>
-            {showP ? <div style={{ fontSize: 22, color: C.olive, fontFamily: "Arial" }}>{w.p}</div> : <button onClick={()=>setShowP(true)} style={btn(C.sand, C.charcoal)}>xem pinyin</button>}
-            <div style={{ marginTop: 8 }}>
-              {showM ? <div style={{ fontSize: 16 }}>📖 {w.m}</div> : <button onClick={()=>setShowM(true)} style={btn(C.sand, C.charcoal)}>xem nghĩa</button>}
-            </div>
-          </div>
-          <div style={{ background: C.parchment, padding: 12, borderRadius: 10, textAlign: "left", marginBottom: 20 }}>
-             <p style={{ fontSize: 11, color: C.stone, margin: "0 0 8px", textTransform: "uppercase" }}>Luyện phát âm</p>
-             <div style={{ ...pill(tone.bg, tone.fg), marginBottom: 10 }}>{tone.mark} {tone.label}</div>
-             <button onClick={() => speak(w.h)} style={btn(C.terra, "#fff")}>Nghe phát âm</button>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={next} style={{ flex: 1, ...btn(C.sand, C.charcoal) }}>Bỏ qua</button>
-            <button onClick={() => setStep(1)} style={{ flex: 2, ...btn(C.terra, "#fff") }}>Đặt câu</button>
-          </div>
-        </div>
-      )}
-      {step === 1 && (
-        <div>
-          <div style={{ fontSize: 32, marginBottom: 15 }}>{w.h} <span style={{ fontSize: 16, color: C.stone }}>{w.p}</span></div>
-          <textarea autoFocus value={input} onChange={e => setInput(e.target.value)} placeholder="Viết một câu..." style={{ width: "100%", height: 120, padding: 12, borderRadius: 8, border: `1px solid ${C.sand}`, fontSize: 16, outline: "none", boxSizing: "border-box" }} />
-          <div style={{ display: "flex", gap: 8, marginTop: 15 }}>
-            <button onClick={() => setStep(0)} style={btn(C.sand, C.charcoal)}>Quay lại</button>
-            <button onClick={handleCheck} disabled={loading} style={{ flex: 1, ...btn(C.nearBlack, "#fff") }}>{loading ? "Đang phân tích..." : "Gửi GV chấm"}</button>
-          </div>
-        </div>
-      )}
-      {step === 2 && fb && (
-        <div>
-          <div style={{ padding: 15, borderRadius: 10, background: fb.score === "good" ? C.successBg : C.errorBg, borderLeft: `5px solid ${fb.score === "good" ? C.success : C.error}`, marginBottom: 20 }}>
-            <b style={{ color: fb.score === "good" ? C.success : C.error }}>{fb.score === "good" ? "✓ Chính xác" : "× Cần sửa lại"}</b>
-            <p style={{ fontSize: 14, margin: "5px 0 0" }}>{fb.ana}</p>
-          </div>
-          <div style={{ background: "#f9f9f9", padding: 15, borderRadius: 10, marginBottom: 15 }}>
-            <p style={{ fontSize: 11, color: C.stone, fontWeight: "bold", margin: "0 0 5px" }}>GIÁO VIÊN SỬA LẠI:</p>
-            <p style={{ fontSize: 22, color: C.terra, margin: "5px 0" }}>{fb.fix}</p>
-            <p style={{ fontSize: 13, color: C.stone, margin: 0 }}>{fb.pin}</p>
-            <p style={{ fontSize: 15, marginTop: 4 }}>{fb.vi}</p>
-          </div>
-          <button onClick={next} style={{ width: "100%", ...btn(C.terra, "#fff"), padding: 15 }}>Học từ tiếp theo</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// --- QUIZ ---
-function Quiz({ words, recordAnswer, setStreak }) {
-  const [qIdx, setQIdx] = useState(0);
-  const [score, setScore] = useState(0);
-  const [opts, setOpts] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [done, setDone] = useState(false);
-
-  const w = words[qIdx % words.length];
-
-  useEffect(() => {
-    if (w) setOpts(shuffle([w, ...getWrong(w, W)]));
-  }, [qIdx, w]);
-
-  const handleAns = (ans) => {
-    if (selected) return;
-    setSelected(ans.h);
-    const isOk = ans.h === w.h;
-    if (isOk) setScore(s => s + 1);
-    recordAnswer(w.h, isOk);
-    setTimeout(() => {
-      if (qIdx < 9) { setQIdx(i => i + 1); setSelected(null); }
-      else { setDone(true); setStreak(s => s + 1); }
-    }, 1000);
-  };
-
-  if (done) return (
-    <div style={{ background: "#fff", padding: 40, borderRadius: 12, textAlign: "center" }}>
-      <h2 style={{ color: C.terra }}>Kết quả: {score}/10</h2>
-      <button onClick={() => window.location.reload()} style={btn(C.terra, "#fff")}>Làm lại</button>
-    </div>
-  );
-
-  return (
-    <div style={{ background: "#fff", padding: 25, borderRadius: 12 }}>
-      <p style={{ fontSize: 12, color: C.stone }}>Câu {qIdx + 1}/10</p>
-      <div style={{ fontSize: 60, textAlign: "center", margin: "20px 0" }}>{w.h}</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        {opts.map(o => (
-          <button key={o.h} onClick={() => handleAns(o)} style={{
-            padding: 15, borderRadius: 10, border: `1px solid ${C.sand}`, cursor: "pointer",
-            background: selected === o.h ? (o.h === w.h ? C.successBg : C.errorBg) : "#fff",
-            color: selected === o.h ? (o.h === w.h ? C.success : C.error) : C.charcoal
-          }}>{o.m}</button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// --- REVIEW ---
-function Review({ weak, unmarkWeak }) {
-  const [mode, setMode] = useState("list");
-  const [content, setContent] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const generateLesson = async () => {
-    setLoading(true);
-    const picked = shuffle(weak).slice(0, 3).map(x => x.h).join(", ");
-    const res = await callAI(`Viết một đoạn hội thoại HSK3 ngắn dùng các từ: ${picked}. JSON: {"chinese":"...","pinyin":"...","vi":"..."}`);
-    if (res) { setContent(res); setMode("reading"); }
-    setLoading(false);
-  };
-
-  if (loading) return <div style={{ textAlign: "center", padding: 40 }}>Đang soạn bài...</div>;
-
-  if (mode === "reading" && content) return (
-    <div style={{ background: "#fff", padding: 25, borderRadius: 12 }}>
-      <p style={{ color: C.nearBlack, lineHeight: 1.8, fontSize: 18 }}>{content.chinese}</p>
-      <p style={{ color: C.stone, fontSize: 14, marginTop: 10 }}>{content.pinyin}</p>
-      <div style={{ background: C.successBg, padding: 12, borderRadius: 8, marginTop: 15 }}>{content.vi}</div>
-      <button onClick={() => setMode("list")} style={{ marginTop: 20, ...btn(C.sand, C.charcoal) }}>Quay lại</button>
-    </div>
-  );
+  if(!w)return null;
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 15 }}>
-        <h3 style={{ margin: 0 }}>Từ cần ôn ({weak.length})</h3>
-        {weak.length >= 2 && <button onClick={generateLesson} style={btn(C.terra, "#fff")}>AI Soạn bài đọc</button>}
-      </div>
-      <div style={{ display: "grid", gap: 10 }}>
-        {weak.map(w => (
-          <div key={w.h} style={{ background: "#fff", padding: 15, borderRadius: 10, display: "flex", justifyContent: "space-between" }}>
-            <div>
-              <b style={{ fontSize: 20 }}>{w.h}</b>
-              <div style={{ fontSize: 12, color: C.stone }}>{w.p} - {w.m}</div>
-              {w.note && <div style={{ fontSize: 11, color: C.error, marginTop: 4 }}>Note: {w.note}</div>}
-            </div>
-            <button onClick={() => unmarkWeak(w.h)} style={btn(C.sand, C.stone)}>✕</button>
+      {step===0&&(
+        <div style={{...card,textAlign:"center"}}>
+          <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+            <span style={{...pill(C.sand,C.olive),fontFamily:"Arial, sans-serif"}}>{w.c}</span>
+            <span style={{...pill(pl.bg,pl.fg),fontFamily:"Arial, sans-serif"}}>{pl.label}</span>
+            {prog[w.h]&&<span style={{...pill(C.sand,C.stone),fontFamily:"Arial, sans-serif"}}>{prog[w.h].correct}/{prog[w.h].seen} đúng</span>}
           </div>
+          <div style={{fontSize:80,fontWeight:500,color:C.terra,lineHeight:1,marginBottom:16}}>{w.h}</div>
+          <div style={{marginBottom:16}}>
+            {showP?<p style={{fontSize:22,color:C.olive,margin:"0 0 6px",fontFamily:"Arial, sans-serif"}}>{w.p}</p>
+              :<button onClick={()=>setShowP(true)} style={{...btn(C.sand,C.charcoal,C.cream),marginBottom:6,fontFamily:"Arial, sans-serif"}}>xem pinyin</button>}
+            {showM?<p style={{fontSize:15,color:C.charcoal,margin:0,fontFamily:"Arial, sans-serif"}}>📖 {w.m}</p>
+              :<button onClick={()=>setShowM(true)} style={{...btn(C.sand,C.charcoal,C.cream),fontFamily:"Arial, sans-serif"}}>xem nghĩa</button>}
+          </div>
+
+          {/* Phát âm */}
+          <div style={{background:C.parchment,border:`1px solid ${C.cream}`,borderRadius:10,padding:12,marginBottom:14,textAlign:"left"}}>
+            <p style={{fontSize:11,color:C.stone,margin:"0 0 8px",fontFamily:"Arial, sans-serif",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px"}}>Luyện phát âm</p>
+            <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"3px 10px",borderRadius:999,fontSize:12,marginBottom:10,background:tone.bg,color:tone.fg,fontFamily:"Arial, sans-serif"}}>
+              <span style={{fontSize:16,fontWeight:500}}>{tone.mark}</span>{tone.label}
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:10}}>
+              <button onClick={doSpeak} disabled={speaking} style={{...btn(speaking?C.cream:C.terra,speaking?C.stone:C.ivory),fontFamily:"Arial, sans-serif"}}>
+                {speaking?"đang phát...":"nghe phát âm"}
+              </button>
+              <button onClick={()=>speak(w.p)} style={{...btn(C.sand,C.charcoal,C.cream),fontFamily:"Arial, sans-serif"}}>chậm hơn</button>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{setPron("good");recordAnswer(w.h,true);}} style={{flex:1,...btn(pron==="good"?C.successBg:C.ivory,pron==="good"?C.success:C.charcoal,pron==="good"?C.success:C.cream),fontFamily:"Arial, sans-serif"}}>
+                {pron==="good"?"✓ Đúng rồi!":"Đọc đúng"}
+              </button>
+              <button onClick={()=>{setPron("bad");markWeak(w,"Phát âm chưa chuẩn");recordAnswer(w.h,false);}} style={{flex:1,...btn(pron==="bad"?C.errorBg:C.ivory,pron==="bad"?C.error:C.charcoal,pron==="bad"?C.error:C.cream),fontFamily:"Arial, sans-serif"}}>
+                {pron==="bad"?"✓ Đã lưu":"Chưa chuẩn"}
+              </button>
+            </div>
+          </div>
+
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={next} style={{flex:1,...btn(C.sand,C.charcoal,C.cream),fontFamily:"Arial, sans-serif"}}>bỏ qua</button>
+            <button onClick={()=>setStep(2)} style={{flex:2,...btn(C.terra,C.ivory),fontFamily:"Arial, sans-serif"}}>đặt câu</button>
+          </div>
+        </div>
+      )}
+
+      {step===2&&(
+        <div style={card}>
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <div style={{fontSize:60,fontWeight:500,color:C.terra}}>{w.h}</div>
+            <p style={{color:C.stone,fontSize:13,margin:"4px 0",fontFamily:"Arial, sans-serif"}}>{w.p} · {w.m}</p>
+            <button onClick={doSpeak} style={{...btn(C.sand,C.charcoal,C.cream),fontSize:12,fontFamily:"Arial, sans-serif"}}>{speaking?"đang phát...":"nghe lại"}</button>
+          </div>
+          <textarea value={sent} onChange={e=>setSent(e.target.value)} placeholder={`Đặt câu có "${w.h}"...`}
+            style={{width:"100%",border:`1px solid ${C.sand}`,borderRadius:8,padding:"10px 12px",fontSize:15,marginBottom:12,outline:"none",resize:"none",boxSizing:"border-box",background:C.ivory,color:C.nearBlack,fontFamily:"Georgia, serif"}} rows={3}/>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setStep(0)} style={{flex:1,...btn(C.sand,C.charcoal,C.cream),fontFamily:"Arial, sans-serif"}}>← lại</button>
+            <button onClick={check} disabled={loading||!sent.trim()} style={{flex:2,...btn(loading||!sent.trim()?C.sand:C.terra,loading||!sent.trim()?C.stone:C.ivory),fontFamily:"Arial, sans-serif"}}>
+              {loading?"đang chấm...":"nộp bài"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step===3&&fb&&(
+        <div style={card}>
+          <div style={{background:fb.score==="good"?C.successBg:C.errorBg,border:`1px solid ${fb.score==="good"?C.success:C.error}`,borderRadius:10,padding:12,marginBottom:12}}>
+            <p style={{fontWeight:500,color:fb.score==="good"?C.success:C.error,marginBottom:4,fontFamily:"Arial, sans-serif",fontSize:14}}>
+              {fb.score==="good"?"Xuất sắc!":"Cần cải thiện"}
+            </p>
+            <p style={{color:C.charcoal,fontSize:13,marginBottom:fb.example?10:0,fontFamily:"Arial, sans-serif"}}>{fb.comment}</p>
+            {fb.example&&(
+              <div style={{background:C.ivory,borderRadius:8,padding:10}}>
+                {fb.correct_usage&&<p style={{fontSize:12,color:C.charcoal,margin:"0 0 4px",fontFamily:"Arial, sans-serif"}}>📐 <strong>Ngữ pháp:</strong> {fb.correct_usage}</p>}
+                {fb.meaning_ok&&<p style={{fontSize:12,color:C.charcoal,margin:"0 0 8px",fontFamily:"Arial, sans-serif"}}>💬 <strong>Tự nhiên:</strong> {fb.meaning_ok}</p>}
+                <p style={{fontSize:11,color:C.stone,margin:"0 0 4px",fontFamily:"Arial, sans-serif",fontWeight:500}}>Câu mẫu</p>
+                <p style={{color:C.terra,fontWeight:500,fontSize:17,margin:"0 0 2px"}}>{fb.example}</p>
+                <button onClick={()=>speak(fb.example)} style={{...btn(C.sand,C.charcoal,C.cream),fontSize:11,padding:"3px 10px",marginBottom:4,fontFamily:"Arial, sans-serif"}}>nghe</button>
+                <p style={{color:C.stone,fontSize:12,margin:"0 0 2px",fontFamily:"Arial, sans-serif"}}>{fb.ex_pinyin}</p>
+                <p style={{color:C.charcoal,fontSize:12,margin:0,fontFamily:"Arial, sans-serif"}}>{fb.ex_vi}</p>
+              </div>
+            )}
+          </div>
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            {!isWeak&&<button onClick={()=>markWeak(w)} style={{flex:1,...btn(C.warningBg,C.warning,C.warning),fontSize:12,fontFamily:"Arial, sans-serif"}}>đánh dấu ôn lại</button>}
+            {isWeak&&<button onClick={()=>unmarkWeak(w.h)} style={{flex:1,...btn(C.sand,C.stone,C.cream),fontSize:12,fontFamily:"Arial, sans-serif"}}>bỏ đánh dấu</button>}
+          </div>
+          <button onClick={next} style={{width:"100%",...btn(C.terra,C.ivory),fontFamily:"Arial, sans-serif"}}>từ tiếp theo</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── QUIZ ─────────────────────────────────────────────────────
+const TOTAL=10;
+function buildQuiz(words){
+  if(words.length<4)return[];
+  const pool=shuffle(words),result=[];
+  for(let i=0;i<TOTAL;i++){
+    const w=pool[i%pool.length],r=Math.random();
+    if(r<0.4) result.push({kind:"mcq",w,opts:shuffle([w,...getWrong(w,words)]),type:Math.random()>.5?"meaning":"pinyin"});
+    else if(r<0.7) result.push({kind:"typing",w});
+    else if(result.length===0||result[result.length-1].kind==="match") result.push({kind:"mcq",w,opts:shuffle([w,...getWrong(w,words)]),type:"meaning"});
+    else{const mp=shuffle(words).slice(0,4);result.push({kind:"match",pairs:mp,rights:shuffle(mp.map(x=>x.m))});}
+  }
+  return result;
+}
+
+function Quiz({words,setStreak,prog,recordAnswer}){
+  const [qs,setQs]=useState([]);
+  const [qi,setQi]=useState(0);
+  const [score,setScore]=useState(0);
+  const [done,setDone]=useState(false);
+  const [sel,setSel]=useState(null);
+  const [typed,setTyped]=useState("");
+  const [typedRes,setTypedRes]=useState(null);
+  const [mSel,setMSel]=useState({l:null,r:null});
+  const [mDone,setMDone]=useState([]);
+  const [mWrong,setMWrong]=useState(null);
+  useEffect(()=>{if(words.length>=4)setQs(buildQuiz(words));},[words]);
+  const resetQ=()=>{setSel(null);setTyped("");setTypedRes(null);setMSel({l:null,r:null});setMDone([]);setMWrong(null);};
+  const next=()=>{if(qi+1>=TOTAL){setDone(true);setStreak(s=>s+1);}else{setQi(i=>i+1);resetQ();}};
+  const restart=()=>{setQs(buildQuiz(words));setQi(0);resetQ();setScore(0);setDone(false);};
+  const handleMCQ=opt=>{if(sel)return;const ok=opt.h===qs[qi].w.h;setSel(opt.h);if(ok)setScore(s=>s+1);recordAnswer(qs[qi].w.h,ok);};
+  const handleTyping=()=>{if(!typed.trim())return;const ok=normPin(typed)===normPin(qs[qi].w.p);setTypedRes(ok?"good":"bad");if(ok)setScore(s=>s+1);recordAnswer(qs[qi].w.h,ok);};
+  if(!qs.length)return<p style={{color:C.stone,fontFamily:"Arial, sans-serif",textAlign:"center"}}>Cần ít nhất 4 từ.</p>;
+
+  if(done){
+    const pct=Math.round(score/TOTAL*100);
+    return(
+      <div style={{...card,textAlign:"center"}}>
+        <div style={{fontSize:48,marginBottom:8}}>{pct>=80?"🏆":pct>=50?"👍":"💪"}</div>
+        <p style={{fontSize:28,fontWeight:500,color:C.nearBlack,margin:"0 0 4px"}}>{score}/{TOTAL}</p>
+        <div style={{background:C.sand,borderRadius:999,height:6,margin:"12px 0 8px"}}>
+          <div style={{background:pct>=80?C.terra:"#d97757",height:6,borderRadius:999,width:`${pct}%`,transition:"width 0.5s"}}/>
+        </div>
+        <p style={{color:C.stone,fontSize:13,marginBottom:20,fontFamily:"Arial, sans-serif"}}>{pct>=80?"Xuất sắc!":pct>=50?"Khá tốt!":"Ôn thêm nhé!"}</p>
+        <button onClick={restart} style={{width:"100%",...btn(C.terra,C.ivory),fontFamily:"Arial, sans-serif"}}>làm lại</button>
+      </div>
+    );
+  }
+
+  const q=qs[qi];
+  const labels={mcq:"trắc nghiệm",typing:"gõ pinyin",match:"ghép cặp"};
+  return(
+    <div style={card}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span style={{fontFamily:"Arial, sans-serif",fontSize:13,color:C.stone}}>
+          câu {qi+1}/{TOTAL} <span style={{...pill(C.sand,C.charcoal),marginLeft:4}}>{labels[q.kind]}</span>
+        </span>
+        <span style={{fontFamily:"Arial, sans-serif",fontSize:13,color:C.terra,fontWeight:500}}>{score} đúng</span>
+      </div>
+      <div style={{background:C.sand,borderRadius:999,height:3,marginBottom:16}}>
+        <div style={{background:C.terra,height:3,borderRadius:999,width:`${(qi/TOTAL)*100}%`}}/>
+      </div>
+
+      {q.kind==="mcq"&&(
+        <div>
+          <div style={{background:C.parchment,border:`1px solid ${C.cream}`,borderRadius:10,padding:16,textAlign:"center",marginBottom:12}}>
+            <p style={{color:C.stone,fontSize:12,marginBottom:4,fontFamily:"Arial, sans-serif"}}>{q.type==="meaning"?"nghĩa của từ này là gì?":"pinyin của từ này là gì?"}</p>
+            <p style={{fontSize:56,fontWeight:500,color:C.terra,margin:"4px 0",lineHeight:1}}>{q.w.h}</p>
+            <p style={{color:C.stone,fontSize:13,margin:0,fontFamily:"Arial, sans-serif"}}>{q.type==="meaning"?q.w.p:q.w.m}</p>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+            {q.opts.map(opt=>{
+              const ok=opt.h===q.w.h,picked=sel===opt.h;
+              let bg=C.ivory,border=C.cream,color=C.charcoal;
+              if(sel){if(ok){bg=C.successBg;border=C.success;color=C.success;}else if(picked){bg=C.errorBg;border=C.error;color=C.error;}else{bg=C.parchment;border=C.cream;color=C.stone;}}
+              return<button key={opt.h} onClick={()=>handleMCQ(opt)} style={{padding:10,borderRadius:10,fontSize:12,textAlign:"center",border:`1px solid ${border}`,background:bg,color,cursor:"pointer",minHeight:44,fontFamily:"Arial, sans-serif",transition:"all 0.1s"}}>{q.type==="meaning"?opt.m:opt.p}</button>;
+            })}
+          </div>
+          {sel&&<button onClick={next} style={{width:"100%",...btn(C.terra,C.ivory),fontFamily:"Arial, sans-serif"}}>{qi+1>=TOTAL?"xem kết quả":"tiếp theo"}</button>}
+        </div>
+      )}
+
+      {q.kind==="typing"&&(
+        <div>
+          <div style={{background:C.parchment,border:`1px solid ${C.cream}`,borderRadius:10,padding:16,textAlign:"center",marginBottom:12}}>
+            <p style={{color:C.stone,fontSize:12,marginBottom:4,fontFamily:"Arial, sans-serif"}}>gõ pinyin (không cần dấu thanh)</p>
+            <p style={{fontSize:56,fontWeight:500,color:C.terra,margin:"4px 0",lineHeight:1}}>{q.w.h}</p>
+            <p style={{color:C.stone,fontSize:13,margin:0,fontFamily:"Arial, sans-serif"}}>{q.w.m}</p>
+          </div>
+          {typedRes&&(
+            <div style={{background:typedRes==="good"?C.successBg:C.errorBg,border:`1px solid ${typedRes==="good"?C.success:C.error}`,borderRadius:8,padding:"8px 12px",textAlign:"center",marginBottom:8,fontSize:13,fontFamily:"Arial, sans-serif",color:typedRes==="good"?C.success:C.error}}>
+              {typedRes==="good"?`Đúng! Pinyin: ${q.w.p}`:`Chưa đúng. Đáp án: ${q.w.p}`}
+            </div>
+          )}
+          {!typedRes?(
+            <div>
+              <input value={typed} onChange={e=>setTyped(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")handleTyping();}}
+                placeholder="gõ pinyin rồi Enter..."
+                style={{width:"100%",border:`1px solid ${C.sand}`,borderRadius:8,padding:"10px 12px",fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:8,background:C.ivory,color:C.nearBlack,fontFamily:"Georgia, serif"}} autoFocus/>
+              <button onClick={handleTyping} disabled={!typed.trim()} style={{width:"100%",...btn(typed.trim()?C.terra:C.sand,typed.trim()?C.ivory:C.stone),fontFamily:"Arial, sans-serif"}}>kiểm tra</button>
+            </div>
+          ):(
+            <button onClick={next} style={{width:"100%",...btn(C.terra,C.ivory),fontFamily:"Arial, sans-serif"}}>{qi+1>=TOTAL?"xem kết quả":"tiếp theo"}</button>
+          )}
+        </div>
+      )}
+
+      {q.kind==="match"&&<MatchQ q={q} mDone={mDone} mSel={mSel} mWrong={mWrong} setMSel={setMSel} setMDone={setMDone} setMWrong={setMWrong} setScore={setScore} recordAnswer={recordAnswer} next={next} qi={qi}/>}
+    </div>
+  );
+}
+
+function MatchQ({q,mDone,mSel,mWrong,setMSel,setMDone,setMWrong,setScore,recordAnswer,next,qi}){
+  const allDone=mDone.length===q.pairs.length;
+  const pick=(side,val)=>{
+    setMWrong(null);
+    const ns=side==="l"?{l:mSel.l===val?null:val,r:mSel.r}:{l:mSel.l,r:mSel.r===val?null:val};
+    setMSel(ns);
+    if(ns.l&&ns.r){
+      const lw=q.pairs.find(x=>x.h===ns.l);
+      if(lw&&lw.m===ns.r){const nd=[...mDone,lw];setMDone(nd);setMSel({l:null,r:null});if(nd.length===q.pairs.length){setScore(s=>s+1);nd.forEach(w=>recordAnswer(w.h,true));}}
+      else{setMWrong(ns.l);recordAnswer(ns.l,false);setTimeout(()=>{setMSel({l:null,r:null});setMWrong(null);},1800);}
+    }
+  };
+  return(
+    <div>
+      <div style={{background:C.parchment,border:`1px solid ${C.cream}`,borderRadius:10,padding:"8px 12px",textAlign:"center",marginBottom:10}}>
+        <p style={{color:C.stone,fontSize:12,margin:0,fontFamily:"Arial, sans-serif"}}>ghép chữ Hán với nghĩa đúng · {mDone.length}/{q.pairs.length} cặp</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {q.pairs.map(pw=>{
+            const done=!!mDone.find(x=>x.h===pw.h),selL=mSel.l===pw.h,wrong=mWrong===pw.h;
+            return<button key={pw.h} onClick={()=>{if(!done)pick("l",pw.h);}} style={{padding:10,borderRadius:10,fontSize:20,fontWeight:500,minHeight:52,cursor:done?"default":"pointer",border:`1px solid ${done?C.success:wrong?C.error:selL?C.terra:C.cream}`,background:done?C.successBg:selL?C.terraLight:C.ivory,color:done?C.success:C.terra,textAlign:"center"}}>
+              {pw.h}
+              {wrong&&<div style={{fontSize:10,color:C.error,fontWeight:400,marginTop:2,fontFamily:"Arial, sans-serif"}}>{pw.p}</div>}
+              {done&&<div style={{fontSize:10,color:C.success,fontWeight:400,marginTop:2,fontFamily:"Arial, sans-serif"}}>{pw.p}</div>}
+            </button>;
+          })}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {q.rights.map(meaning=>{
+            const done=!!mDone.find(x=>x.m===meaning),selR=mSel.r===meaning;
+            return<button key={meaning} onClick={()=>{if(!done)pick("r",meaning);}} style={{padding:8,borderRadius:10,fontSize:11,minHeight:52,textAlign:"center",lineHeight:"1.4",cursor:done?"default":"pointer",border:`1px solid ${done?C.success:selR?C.terra:C.cream}`,background:done?C.successBg:selR?C.terraLight:C.ivory,color:done?C.success:C.charcoal,fontFamily:"Arial, sans-serif"}}>
+              {meaning}
+            </button>;
+          })}
+        </div>
+      </div>
+      {allDone&&<button onClick={next} style={{width:"100%",...btn(C.terra,C.ivory),fontFamily:"Arial, sans-serif"}}>{qi+1>=TOTAL?"xem kết quả":"tiếp theo"}</button>}
+    </div>
+  );
+}
+
+// ── REVIEW ───────────────────────────────────────────────────
+function Review({weak,unmarkWeak}){
+  const [mode,setMode]=useState("menu");
+  const [type,setType]=useState("dialogue");
+  const [content,setContent]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [showTrans,setShowTrans]=useState(false);
+  const [showPin,setShowPin]=useState(false);
+  const [userTrans,setUserTrans]=useState("");
+  const [fb,setFb]=useState(null);
+  const [checking,setChecking]=useState(false);
+  const pool=weak.length>=3?weak:[...weak,...W.filter(w=>!weak.find(x=>x.h===w.h)).slice(0,6-weak.length)];
+  const generate=async()=>{
+    setLoading(true);setMode("generate");setShowTrans(false);setShowPin(false);setUserTrans("");setFb(null);
+    const picked=shuffle(pool).slice(0,Math.min(type==="dialogue"?3:4,pool.length));
+    const wl=picked.map(w=>`${w.h}(${w.m})`).join(", ");
+    try{
+      const raw=await callAI(`HSK3. Viết ${type==="dialogue"?"hội thoại ngắn 4 lượt A/B":"đoạn văn 4 câu"} dùng: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1500);
+      const p=JSON.parse(raw.replace(/```json|```/g,"").trim());
+      setContent(p);setMode("reading");
+    }catch(e){console.log("Review error:",e);setMode("menu");}
+    setLoading(false);
+  };
+  const checkTrans=async()=>{
+    if(!userTrans.trim())return;setChecking(true);
+    try{
+      const raw=await callAI(`HSK3. Gốc:"${content.chinese}". Chuẩn:"${content.vietnamese}". HS:"${userTrans}". JSON:{"score":"good/ok/bad","comment":"1-2 câu TV"}`);
+      setFb(JSON.parse(raw.replace(/```json|```/g,"").trim()));
+    }catch{setFb({score:"bad",comment:"⚠️ Lỗi kết nối."});}
+    setChecking(false);
+  };
+
+  if(mode==="menu")return(
+    <div style={card}>
+      <div style={{background:C.parchment,border:`1px solid ${C.cream}`,borderRadius:10,padding:12,marginBottom:14}}>
+        <p style={{fontWeight:500,color:C.charcoal,fontSize:13,marginBottom:6,fontFamily:"Arial, sans-serif"}}>Từ cần ôn</p>
+        {weak.length===0?<p style={{color:C.stone,fontSize:12,margin:0,fontFamily:"Arial, sans-serif"}}>Chưa có — dùng từ ngẫu nhiên HSK3</p>
+          :<div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            {weak.map(w=>(
+              <span key={w.h} style={{...pill(C.errorBg,C.error),display:"inline-flex",alignItems:"center",gap:4,border:`1px solid ${C.error}`}}>
+                {w.h}<button onClick={()=>unmarkWeak(w.h)} style={{color:C.warmSilver,background:"none",border:"none",cursor:"pointer",fontSize:10,padding:0,lineHeight:1}}>✕</button>
+              </span>
+            ))}
+          </div>}
+      </div>
+      <p style={{fontSize:13,color:C.charcoal,marginBottom:8,fontFamily:"Arial, sans-serif",fontWeight:500}}>Chọn loại bài</p>
+      <div style={{display:"flex",gap:8,marginBottom:14}}>
+        {[["dialogue","hội thoại"],["paragraph","đoạn văn"]].map(([k,l])=>(
+          <button key={k} onClick={()=>setType(k)} style={{flex:1,padding:10,borderRadius:8,fontSize:13,fontWeight:500,border:`1px solid ${type===k?C.terra:C.cream}`,background:type===k?C.terraLight:C.ivory,color:type===k?C.terra:C.charcoal,cursor:"pointer",fontFamily:"Arial, sans-serif"}}>{l}</button>
         ))}
-        {weak.length === 0 && <p style={{ textAlign: "center", color: C.stone }}>Bạn chưa có từ yếu nào!</p>}
+      </div>
+      <button onClick={generate} style={{width:"100%",...btn(C.terra,C.ivory),padding:"10px 14px",fontFamily:"Arial, sans-serif"}}>tạo bài luyện</button>
+    </div>
+  );
+
+  if(loading)return<div style={{...card,textAlign:"center",padding:40}}><p style={{color:C.stone,fontFamily:"Arial, sans-serif"}}>Đang tạo bài...</p></div>;
+
+  if(mode==="reading"&&content)return(
+    <div style={card}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:12}}>
+        {(content.words_used||[]).map(w=><span key={w} style={{...pill(C.terraLight,C.terra),border:`1px solid ${C.terra}`}}>{w}</span>)}
+      </div>
+      <div style={{background:C.parchment,border:`1px solid ${C.cream}`,borderRadius:10,padding:14,marginBottom:12}}>
+        <p style={{fontSize:11,color:C.stone,fontWeight:500,marginBottom:8,fontFamily:"Arial, sans-serif",textTransform:"uppercase",letterSpacing:"0.5px"}}>{type==="dialogue"?"hội thoại":"đoạn văn"}</p>
+        <p style={{color:C.nearBlack,lineHeight:1.7,fontSize:15,whiteSpace:"pre-line",margin:0}}>{content.chinese}</p>
+        <button onClick={()=>setShowPin(v=>!v)} style={{...btn(C.sand,C.charcoal,C.cream),fontSize:11,marginTop:8,fontFamily:"Arial, sans-serif"}}>{showPin?"ẩn pinyin":"xem pinyin"}</button>
+        {showPin&&<p style={{color:C.stone,fontSize:12,marginTop:6,lineHeight:1.7,whiteSpace:"pre-line",fontFamily:"Arial, sans-serif"}}>{content.pinyin}</p>}
+      </div>
+      {!showTrans&&(
+        <div style={{marginBottom:12}}>
+          <p style={{fontSize:13,fontWeight:500,color:C.charcoal,marginBottom:8,fontFamily:"Arial, sans-serif"}}>Dịch thử đi</p>
+          <textarea value={userTrans} onChange={e=>setUserTrans(e.target.value)} placeholder="Gõ bản dịch tiếng Việt..."
+            style={{width:"100%",border:`1px solid ${C.sand}`,borderRadius:8,padding:"10px 12px",fontSize:13,outline:"none",resize:"none",boxSizing:"border-box",background:C.ivory,color:C.nearBlack,fontFamily:"Georgia, serif"}} rows={4}/>
+          <div style={{display:"flex",gap:8,marginTop:8}}>
+            <button onClick={()=>setShowTrans(true)} style={{flex:1,...btn(C.sand,C.charcoal,C.cream),fontFamily:"Arial, sans-serif"}}>xem đáp án</button>
+            <button onClick={checkTrans} disabled={checking||!userTrans.trim()} style={{flex:1,...btn(checking||!userTrans.trim()?C.sand:C.terra,checking||!userTrans.trim()?C.stone:C.ivory),fontFamily:"Arial, sans-serif"}}>{checking?"đang chấm...":"chấm bài"}</button>
+          </div>
+        </div>
+      )}
+      {fb&&!showTrans&&(
+        <div style={{background:fb.score==="good"?C.successBg:fb.score==="ok"?C.warningBg:C.errorBg,border:`1px solid ${fb.score==="good"?C.success:fb.score==="ok"?C.warning:C.error}`,borderRadius:10,padding:12,marginBottom:12}}>
+          <p style={{fontWeight:500,color:fb.score==="good"?C.success:fb.score==="ok"?C.warning:C.error,marginBottom:4,fontFamily:"Arial, sans-serif",fontSize:14}}>{fb.score==="good"?"Dịch rất tốt!":fb.score==="ok"?"Khá tốt!":"Cần cải thiện"}</p>
+          <p style={{color:C.charcoal,fontSize:13,marginBottom:6,fontFamily:"Arial, sans-serif"}}>{fb.comment}</p>
+          <button onClick={()=>setShowTrans(true)} style={{...btn(C.sand,C.charcoal,C.cream),fontSize:12,fontFamily:"Arial, sans-serif"}}>xem đáp án chuẩn</button>
+        </div>
+      )}
+      {showTrans&&(
+        <div style={{background:C.successBg,border:`1px solid ${C.success}`,borderRadius:10,padding:12,marginBottom:12}}>
+          <p style={{fontSize:11,fontWeight:500,color:C.success,marginBottom:6,fontFamily:"Arial, sans-serif",textTransform:"uppercase",letterSpacing:"0.5px"}}>Bản dịch chuẩn</p>
+          <p style={{color:C.charcoal,fontSize:13,lineHeight:1.7,whiteSpace:"pre-line",margin:0,fontFamily:"Arial, sans-serif"}}>{content.vietnamese}</p>
+        </div>
+      )}
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={()=>{setMode("menu");setContent(null);}} style={{flex:1,...btn(C.sand,C.charcoal,C.cream),fontFamily:"Arial, sans-serif"}}>← menu</button>
+        <button onClick={generate} style={{flex:1,...btn(C.terra,C.ivory),fontFamily:"Arial, sans-serif"}}>bài mới</button>
       </div>
     </div>
   );
+  return null;
 }
