@@ -150,15 +150,17 @@ const getProgLabel = (prog,h) => {
   return {label:"cần ôn",bg:C.errorBg,fg:C.error};
 };
 
-async function callAI(prompt, maxTokens=1000) {
-  const res = await fetch("https://api.anthropic.com/v1/messages",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:maxTokens,messages:[{role:"user",content:prompt}]})
+async function callAI(prompt) {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 1500
+    })
   });
   const data = await res.json();
-  const text = data?.content?.[0]?.text||"";
-  const m = text.match(/\{[\s\S]*\}/);
-  return m?m[0]:text;
+  return data.content[0].text;
 }
 
 // ── SHARED STYLES ────────────────────────────────────────────
