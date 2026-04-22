@@ -275,7 +275,8 @@ function Flashcard({words,weak,markWeak,unmarkWeak,setStreak,prog,recordAnswer})
     if(!sent.trim())return;
     setLoading(true);
     try{
-      const raw=await callAI(`Giáo viên HSK3. Từ đang học: "${w.h}"(${w.p}=${w.m}). Câu HS: "${sent}". Trả JSON: {"score":"good/bad","correct_usage":"dùng từ đúng/sai ngữ pháp chưa","meaning_ok":"câu có tự nhiên không","comment":"1 câu nhận xét TV","example":"câu mẫu đúng bắt buộc dùng từ này","ex_pinyin":"pinyin câu mẫu","ex_vi":"nghĩa TV"}`);
+      const raw = await callAI(`Giáo viên tiếng Trung HSK3. Từ: "${w.h}" (${w.p} - ${w.m}). Câu HS: "${sent}". Trả về JSON duy nhất: {"score":"good/bad","comment":"nhận xét ngắn tiếng Việt","example":"câu mẫu dùng từ ${w.h}","ex_pinyin":"pinyin","ex_vi":"nghĩa TV"}`);
+      const p = JSON.parse(raw.replace(/```json|```/g,"").trim());
       setFb(p);setStep(3);setStreak(s=>s+1);
       recordAnswer(w.h,p.score==="good");
       if(p.score==="bad")markWeak(w,p.comment);
