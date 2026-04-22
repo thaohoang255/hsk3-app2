@@ -20,7 +20,8 @@ export default async function handler(req, res) {
     let text = data?.content?.[0]?.text || "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) text = jsonMatch[0];
-    res.status(200).json({ content: [{ text }] });
+    console.log("TEXT:", text.slice(0, 200));
+res.status(200).json({ content: [{ text }] });
   } catch (err) {
     console.error("ERROR:", err.message);
     res.status(500).json({ error: err.message });
