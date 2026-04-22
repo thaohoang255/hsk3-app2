@@ -861,15 +861,16 @@ Chỉ trả JSON, không giải thích thêm:
         <textarea
           value={userTrans}
           onChange={e => setUserTrans(e.target.value)}
+          readOnly={!!fb}
           placeholder="Gõ bản dịch tiếng Việt..."
-          style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 13, outline: "none", resize: "none", boxSizing: "border-box", background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
+          style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 13, outline: "none", resize: "none", boxSizing: "border-box", background: fb ? C.cream : C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
           rows={4}
         />
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           <button onClick={() => setShowTrans(v => !v)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>
             {showTrans ? "ẩn đáp án" : "xem đáp án"}
           </button>
-          <button onClick={checkTrans} disabled={checking || !userTrans.trim()} style={{ flex: 1, ...btn(checking || !userTrans.trim() ? C.sand : C.terra, checking || !userTrans.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
+          <button onClick={checkTrans} disabled={checking || (!fb && !userTrans.trim())} style={{ flex: 1, ...btn(checking || !userTrans.trim() ? C.sand : C.terra, checking || !userTrans.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
             {checking ? "đang chấm..." : fb ? (showFb ? "ẩn kết quả" : "xem kết quả") : "chấm bài"}
           </button>
         </div>
