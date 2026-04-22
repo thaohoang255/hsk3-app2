@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { messages, max_tokens = 2000 } = req.body;
+  const { messages, max_tokens = 1500 } = req.body;
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
