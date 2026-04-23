@@ -770,9 +770,17 @@ function Review({ weak, unmarkWeak }) {
     const wl = picked.map(w => w.h).join(", ");
     try {
       const raw = await callAI(
-        `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng: ${wl}. Yêu cầu: (1) Pinyin phải là Latin hoàn toàn, KHÔNG để chữ Hán lẫn vào pinyin. (2) Không thêm âm thừa. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["chỉ chữ Hán"]}`
+          `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng các từ sau: ${wl}.
+
+        Quy tắc bắt buộc:
+        - "pinyin" phải là phiên âm Latin 100%, TUYỆT ĐỐI không có chữ Hán nào lẫn vào
+        - Mỗi chữ Hán đều phải có pinyin tương ứng, kể cả tên riêng
+        - Không thêm âm thừa vào pinyin
+
+        Chỉ trả JSON, không giải thích:
+        {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["chỉ chữ Hán"]}`,
         1500
-      );
+        );
       const p = safeParse(raw);
       if (!p) throw new Error("Parse fail");
       setContent(p);
