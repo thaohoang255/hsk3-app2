@@ -1,99 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
+import W from "../data/words";
 
-// ── WORD LIST ────────────────────────────────────────────────
-const W = [
-  {h:"万",p:"wàn",m:"mười nghìn",c:"Số đếm"},{h:"半",p:"bàn",m:"một nửa",c:"Số đếm"},
-  {h:"自己",p:"zìjǐ",m:"bản thân mình",c:"Đại từ"},{h:"大家",p:"dàjiā",m:"mọi người",c:"Đại từ"},
-  {h:"其他",p:"qítā",m:"khác, những cái khác",c:"Đại từ"},{h:"别人",p:"biéren",m:"người khác",c:"Đại từ"},
-  {h:"刚才",p:"gāngcái",m:"vừa mới, lúc nãy",c:"Thời gian"},{h:"周末",p:"zhōumò",m:"cuối tuần",c:"Thời gian"},
-  {h:"以前",p:"yǐqián",m:"trước đây",c:"Thời gian"},{h:"以后",p:"yǐhòu",m:"sau này",c:"Thời gian"},
-  {h:"最近",p:"zuìjìn",m:"gần đây",c:"Thời gian"},{h:"去年",p:"qùnián",m:"năm ngoái",c:"Thời gian"},
-  {h:"季节",p:"jìjié",m:"mùa, thời tiết",c:"Thời gian"},{h:"节日",p:"jiérì",m:"ngày lễ, ngày hội",c:"Thời gian"},
-  {h:"丈夫",p:"zhàngfu",m:"chồng",c:"Con người"},{h:"妻子",p:"qīzi",m:"vợ",c:"Con người"},
-  {h:"爷爷",p:"yéye",m:"ông nội",c:"Con người"},{h:"奶奶",p:"nǎinai",m:"bà nội",c:"Con người"},
-  {h:"叔叔",p:"shūshu",m:"chú (em trai bố)",c:"Con người"},{h:"阿姨",p:"āyí",m:"cô, dì",c:"Con người"},
-  {h:"邻居",p:"línjū",m:"hàng xóm",c:"Con người"},{h:"同事",p:"tóngshì",m:"đồng nghiệp",c:"Con người"},
-  {h:"校长",p:"xiàozhǎng",m:"hiệu trưởng",c:"Con người"},{h:"司机",p:"sījī",m:"tài xế",c:"Con người"},
-  {h:"服务员",p:"fúwùyuán",m:"nhân viên phục vụ",c:"Con người"},{h:"经理",p:"jīnglǐ",m:"giám đốc",c:"Con người"},
-  {h:"身体",p:"shēntǐ",m:"cơ thể, sức khỏe",c:"Cơ thể"},{h:"脸",p:"liǎn",m:"mặt, khuôn mặt",c:"Cơ thể"},
-  {h:"眼睛",p:"yǎnjīng",m:"mắt",c:"Cơ thể"},{h:"耳朵",p:"ěrduo",m:"tai",c:"Cơ thể"},
-  {h:"鼻子",p:"bízi",m:"mũi",c:"Cơ thể"},{h:"头发",p:"tóufa",m:"tóc",c:"Cơ thể"},
-  {h:"腿",p:"tuǐ",m:"chân (đùi)",c:"Cơ thể"},{h:"脚",p:"jiǎo",m:"bàn chân",c:"Cơ thể"},
-  {h:"牛奶",p:"niúnǎi",m:"sữa bò",c:"Đồ ăn"},{h:"面包",p:"miànbāo",m:"bánh mì",c:"Đồ ăn"},
-  {h:"蛋糕",p:"dàngāo",m:"bánh kem",c:"Đồ ăn"},{h:"米饭",p:"mǐfàn",m:"cơm",c:"Đồ ăn"},
-  {h:"面条",p:"miàntiáo",m:"mì sợi",c:"Đồ ăn"},{h:"鸡蛋",p:"jīdàn",m:"trứng gà",c:"Đồ ăn"},
-  {h:"菜单",p:"càidān",m:"thực đơn",c:"Đồ ăn"},{h:"香蕉",p:"xiāngjiāo",m:"chuối",c:"Đồ ăn"},
-  {h:"西瓜",p:"xīguā",m:"dưa hấu",c:"Đồ ăn"},{h:"啤酒",p:"píjiǔ",m:"bia",c:"Đồ ăn"},
-  {h:"衬衫",p:"chènshān",m:"áo sơ mi",c:"Quần áo"},{h:"裤子",p:"kùzi",m:"quần",c:"Quần áo"},
-  {h:"裙子",p:"qúnzi",m:"váy",c:"Quần áo"},{h:"帽子",p:"màozi",m:"mũ",c:"Quần áo"},
-  {h:"眼镜",p:"yǎnjìng",m:"kính mắt",c:"Quần áo"},
-  {h:"作业",p:"zuòyè",m:"bài tập về nhà",c:"Học tập"},{h:"考试",p:"kǎoshì",m:"kỳ thi",c:"Học tập"},
-  {h:"成绩",p:"chéngjì",m:"thành tích, điểm số",c:"Học tập"},{h:"水平",p:"shuǐpíng",m:"trình độ",c:"Học tập"},
-  {h:"图书馆",p:"túshūguǎn",m:"thư viện",c:"Địa điểm"},{h:"办公室",p:"bàngōngshì",m:"văn phòng",c:"Địa điểm"},
-  {h:"饭馆",p:"fànguǎn",m:"nhà hàng",c:"Địa điểm"},{h:"宾馆",p:"bīngguǎn",m:"khách sạn",c:"Địa điểm"},
-  {h:"超市",p:"chāoshì",m:"siêu thị",c:"Địa điểm"},{h:"火车站",p:"huǒchēzhàn",m:"ga tàu hỏa",c:"Địa điểm"},
-  {h:"附近",p:"fùjìn",m:"gần đây",c:"Hướng"},{h:"前面",p:"qiánmiàn",m:"phía trước",c:"Hướng"},
-  {h:"后面",p:"hòumiàn",m:"phía sau",c:"Hướng"},{h:"中间",p:"zhōngjiān",m:"ở giữa",c:"Hướng"},
-  {h:"左边",p:"zuǒbiān",m:"bên trái",c:"Hướng"},{h:"右边",p:"yòubiān",m:"bên phải",c:"Hướng"},
-  {h:"参加",p:"cānjiā",m:"tham gia",c:"Động từ"},{h:"帮助",p:"bāngzhù",m:"giúp đỡ",c:"Động từ"},
-  {h:"出现",p:"chūxiàn",m:"xuất hiện",c:"Động từ"},{h:"打算",p:"dǎsuàn",m:"dự định",c:"Động từ"},
-  {h:"担心",p:"dānxīn",m:"lo lắng",c:"Động từ"},{h:"发现",p:"fāxiàn",m:"phát hiện",c:"Động từ"},
-  {h:"复习",p:"fùxí",m:"ôn tập",c:"Động từ"},{h:"决定",p:"juédìng",m:"quyết định",c:"Động từ"},
-  {h:"解决",p:"jiějué",m:"giải quyết",c:"Động từ"},{h:"介绍",p:"jièshào",m:"giới thiệu",c:"Động từ"},
-  {h:"了解",p:"liǎojiě",m:"hiểu rõ",c:"Động từ"},{h:"离开",p:"líkāi",m:"rời đi",c:"Động từ"},
-  {h:"满意",p:"mǎnyì",m:"hài lòng",c:"Động từ"},{h:"努力",p:"nǔlì",m:"cố gắng",c:"Động từ"},
-  {h:"完成",p:"wánchéng",m:"hoàn thành",c:"Động từ"},{h:"相信",p:"xiāngxìn",m:"tin tưởng",c:"Động từ"},
-  {h:"选择",p:"xuǎnzé",m:"lựa chọn",c:"Động từ"},{h:"注意",p:"zhùyì",m:"chú ý",c:"Động từ"},
-  {h:"准备",p:"zhǔnbèi",m:"chuẩn bị",c:"Động từ"},{h:"迟到",p:"chídào",m:"đến muộn",c:"Động từ"},
-  {h:"成功",p:"chénggōng",m:"thành công",c:"Động từ"},{h:"提高",p:"tígāo",m:"nâng cao",c:"Động từ"},
-  {h:"同意",p:"tóngyì",m:"đồng ý",c:"Động từ"},{h:"坚持",p:"jiānchí",m:"kiên trì",c:"Động từ"},
-  {h:"联系",p:"liánxì",m:"liên lạc",c:"Động từ"},{h:"讨论",p:"tǎolùn",m:"thảo luận",c:"Động từ"},
-  {h:"支持",p:"zhīchí",m:"ủng hộ",c:"Động từ"},{h:"游泳",p:"yóuyǒng",m:"bơi lội",c:"Động từ"},
-  {h:"聪明",p:"cōngming",m:"thông minh",c:"Tính từ"},{h:"方便",p:"fāngbiàn",m:"thuận tiện",c:"Tính từ"},
-  {h:"健康",p:"jiànkāng",m:"khỏe mạnh",c:"Tính từ"},{h:"干净",p:"gānjìng",m:"sạch sẽ",c:"Tính từ"},
-  {h:"高兴",p:"gāoxìng",m:"vui mừng",c:"Tính từ"},{h:"简单",p:"jiǎndān",m:"đơn giản",c:"Tính từ"},
-  {h:"困难",p:"kùnnán",m:"khó khăn",c:"Tính từ"},{h:"认真",p:"rènzhēn",m:"chăm chỉ",c:"Tính từ"},
-  {h:"特别",p:"tèbié",m:"đặc biệt",c:"Tính từ"},{h:"重要",p:"zhòngyào",m:"quan trọng",c:"Tính từ"},
-  {h:"紧张",p:"jǐnzhāng",m:"căng thẳng",c:"Tính từ"},{h:"流利",p:"liúlì",m:"trôi chảy",c:"Tính từ"},
-  {h:"不但",p:"bùdàn",m:"không những",c:"Liên từ"},{h:"虽然",p:"suīrán",m:"mặc dù",c:"Liên từ"},
-  {h:"因为",p:"yīnwèi",m:"vì, bởi vì",c:"Liên từ"},{h:"所以",p:"suǒyǐ",m:"vì vậy",c:"Liên từ"},
-  {h:"如果",p:"rúguǒ",m:"nếu như",c:"Liên từ"},{h:"而且",p:"érqiě",m:"hơn nữa",c:"Liên từ"},
-  {h:"终于",p:"zhōngyú",m:"cuối cùng",c:"Phó từ"},{h:"已经",p:"yǐjīng",m:"đã, rồi",c:"Phó từ"},
-  {h:"一直",p:"yīzhí",m:"liên tục, mãi mãi",c:"Phó từ"},{h:"其实",p:"qíshí",m:"thực ra",c:"Phó từ"},
-  {h:"当然",p:"dāngrán",m:"tất nhiên",c:"Phó từ"},{h:"经常",p:"jīngcháng",m:"thường xuyên",c:"Phó từ"},
-  {h:"必须",p:"bìxū",m:"bắt buộc phải",c:"Phó từ"},
-  {h:"把",p:"bǎ",m:"giới từ chỉ đối tượng",c:"Giới từ"},{h:"被",p:"bèi",m:"bị, được (bị động)",c:"Giới từ"},
-  {h:"比",p:"bǐ",m:"so với, hơn",c:"Giới từ"},{h:"离",p:"lí",m:"cách (khoảng cách)",c:"Giới từ"},
-  {h:"关于",p:"guānyú",m:"về, liên quan đến",c:"Giới từ"},{h:"为了",p:"wèile",m:"vì (mục đích)",c:"Giới từ"},
-];
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 // ── COLORS ──────────────────────────────────────────────────
 const C = {
-  parchment: "#f5f4ed",
-  ivory:     "#faf9f5",
-  terra:     "#c96442",
-  terraLight:"#f5ece7",
-  nearBlack: "#141413",
-  charcoal:  "#4d4c48",
-  olive:     "#5e5d59",
-  stone:     "#87867f",
-  sand:      "#e8e6dc",
-  cream:     "#f0eee6",
-  warmSilver:"#b0aea5",
-  darkSurf:  "#30302e",
-  success:   "#3b6d11",
-  successBg: "#eaf3de",
-  error:     "#993c1d",
-  errorBg:   "#faece7",
-  warning:   "#854f0b",
-  warningBg: "#faeeda",
+  parchment: "#f5f4ed", ivory: "#faf9f5", terra: "#c96442",
+  terraLight: "#f5ece7", nearBlack: "#141413", charcoal: "#4d4c48",
+  olive: "#5e5d59", stone: "#87867f", sand: "#e8e6dc", cream: "#f0eee6",
+  warmSilver: "#b0aea5", success: "#3b6d11", successBg: "#eaf3de",
+  error: "#993c1d", errorBg: "#faece7", warning: "#854f0b", warningBg: "#faeeda",
 };
 
 // ── UTILS ────────────────────────────────────────────────────
 const shuffle = a => [...a].sort(() => Math.random() - 0.5);
 const getWrong = (w, all) => shuffle(all.filter(x => x.h !== w.h)).slice(0, 3);
 const CATS = ["Tất cả", ...Array.from(new Set(W.map(w => w.c)))];
-
 const TONES = [
   {t:"1",mark:"ˉ",bg:"#e6f1fb",fg:"#185fa5",label:"Thanh 1 — ngang cao"},
   {t:"2",mark:"ˊ",bg:"#eaf3de",fg:"#3b6d11",label:"Thanh 2 — lên"},
@@ -101,7 +27,6 @@ const TONES = [
   {t:"4",mark:"ˋ",bg:"#faece7",fg:"#993c1d",label:"Thanh 4 — xuống nhanh"},
   {t:"5",mark:"·",bg:C.sand,fg:C.olive,label:"Thanh nhẹ"},
 ];
-
 const getTone = p => {
   if (/[āēīōūǖ]/.test(p)) return TONES[0];
   if (/[áéíóúǘ]/.test(p)) return TONES[1];
@@ -109,149 +34,212 @@ const getTone = p => {
   if (/[àèìòùǜ]/.test(p)) return TONES[3];
   return TONES[4];
 };
-
 const speak = text => {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = "zh-CN";
-  u.rate = 0.85;
+  u.lang = "zh-CN"; u.rate = 0.85;
   const zh = window.speechSynthesis.getVoices().find(v => v.lang.startsWith("zh"));
   if (zh) u.voice = zh;
   window.speechSynthesis.speak(u);
 };
-
 const normPin = s => s.toLowerCase()
   .replace(/[āáǎà]/g,"a").replace(/[ēéěè]/g,"e").replace(/[īíǐì]/g,"i")
   .replace(/[ōóǒò]/g,"o").replace(/[ūúǔù]/g,"u").replace(/[ǖǘǚǜ]/g,"u")
   .replace(/[-\s]/g,"");
-
-// ── SAFE JSON PARSE ──────────────────────────────────────────
-// FIX: moved to top so all components below can use it
 const safeParse = text => {
   try {
-    const cleaned = text.replace(/```json|```/g, "").trim();
-    const m = cleaned.match(/\{[^]*\}/);
+    const m = text.replace(/```json|```/g,"").trim().match(/\{[^]*\}/);
     return m ? JSON.parse(m[0]) : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 };
 
-// ── AI CALL ──────────────────────────────────────────────────
-// Calls your Next.js backend at /api/chat, which holds the API key securely
-const callAI = async (prompt, maxTokens = 1000) => {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: maxTokens,
-    }),
-  });
-  if (!res.ok) throw new Error("API error");
-  const data = await res.json();
-  return data?.content?.[0]?.text || "";
-};
-
-// ── SPACED REPETITION ────────────────────────────────────────
+// ── SPACED REPETITION (SM-2) ─────────────────────────────────
 const DAY = 86400000;
-
 const defaultProg = { ease: 2.3, interval: 0, due: 0, streak: 0, seen: 0, correct: 0 };
-
-const loadProg = async () => {
-  try {
-    const r = await window.storage.get("hsk3_prog");
-    return r ? JSON.parse(r.value) : {};
-  } catch {
-    return {};
-  }
-};
-
-const saveProg = async p => {
-  try { await window.storage.set("hsk3_prog", JSON.stringify(p)); } catch {}
-};
 
 const updateProg = (prog, hanzi, result) => {
   const now = Date.now();
   const cur = prog[hanzi] || { ...defaultProg };
   let { ease, interval, streak } = cur;
-
-  if (result === "good") {
-    streak += 1;
-    ease = Math.min(ease + 0.1, 3);
-    interval = interval === 0 ? 1 : Math.round(interval * ease);
-  } else if (result === "ok") {
-    streak = 0;
-    ease = Math.max(ease - 0.1, 1.3);
-    interval = Math.max(1, Math.round(interval * 1.1));
-  } else {
-    streak = 0;
-    ease = Math.max(ease - 0.25, 1.3);
-    interval = 1;
-  }
-
-  return {
-    ...prog,
-    [hanzi]: {
-      ease, interval,
-      due: now + interval * DAY,
-      streak,
-      seen: cur.seen + 1,
-      correct: cur.correct + (result === "good" ? 1 : 0),
-    },
-  };
+  if (result === "good")      { streak += 1; ease = Math.min(ease + 0.1, 3); interval = interval === 0 ? 1 : Math.round(interval * ease); }
+  else if (result === "ok")   { streak = 0; ease = Math.max(ease - 0.1, 1.3); interval = Math.max(1, Math.round(interval * 1.1)); }
+  else                        { streak = 0; ease = Math.max(ease - 0.25, 1.3); interval = 1; }
+  return { ...prog, [hanzi]: { ease, interval, due: now + interval * DAY, streak, seen: cur.seen + 1, correct: cur.correct + (result === "good" ? 1 : 0) } };
 };
 
 const pickWord = (words, prog) => {
   const now = Date.now();
-  const dueWords = words.filter(w => !prog[w.h] || prog[w.h].due <= now);
-  if (dueWords.length > 0) return dueWords[Math.floor(Math.random() * dueWords.length)];
-  return words[Math.floor(Math.random() * words.length)];
+  const due = words.filter(w => !prog[w.h] || prog[w.h].due <= now);
+  return due.length > 0 ? due[Math.floor(Math.random() * due.length)] : words[Math.floor(Math.random() * words.length)];
 };
 
 const getStats = (words, prog) => ({
-  mastered: words.filter(w => prog[w.h] && prog[w.h].interval >= 7).length,
+  mastered: words.filter(w => prog[w.h]?.interval >= 7).length,
   learning:  words.filter(w => prog[w.h] && prog[w.h].interval < 7).length,
   unseen:    words.filter(w => !prog[w.h]).length,
 });
 
 const getProgLabel = (prog, h) => {
   if (!prog[h]) return { label: "chưa học", bg: C.sand, fg: C.olive };
-  const p = prog[h];
-  if (p.interval >= 7) return { label: "đã thuộc", bg: C.successBg, fg: C.success };
-  if (p.interval >= 2) return { label: "đang học", bg: C.warningBg, fg: C.warning };
+  if (prog[h].interval >= 7) return { label: "đã thuộc", bg: C.successBg, fg: C.success };
+  if (prog[h].interval >= 2) return { label: "đang học", bg: C.warningBg, fg: C.warning };
   return { label: "cần ôn", bg: C.errorBg, fg: C.error };
 };
 
-// ── SHARED STYLES ────────────────────────────────────────────
+// ── AI CALL ──────────────────────────────────────────────────
+const callAI = async (prompt, maxTokens = 1000) => {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: prompt }], max_tokens: maxTokens }),
+  });
+  if (!res.ok) throw new Error("API error");
+  const data = await res.json();
+  return data?.content?.[0]?.text || "";
+};
+
+// ── STYLES ───────────────────────────────────────────────────
 const card = { background: C.ivory, border: `1px solid ${C.cream}`, borderRadius: 12, padding: "16px" };
 const btn  = (bg, fg, border) => ({ background: bg, color: fg, border: `1px solid ${border || bg}`, borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "Georgia, serif" });
 const pill = (bg, fg) => ({ background: bg, color: fg, borderRadius: 999, padding: "2px 10px", fontSize: 11, fontWeight: 500, display: "inline-block" });
 
+// ── LOGIN SCREEN ─────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSend = async () => {
+    if (!email.trim()) return;
+    setLoading(true); setError("");
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: window.location.origin }
+    });
+    if (error) setError(error.message);
+    else setSent(true);
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.parchment, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <h1 style={{ fontSize: 32, fontWeight: 500, color: C.nearBlack, margin: "0 0 8px" }}>漢語水平考試</h1>
+          <p style={{ color: C.stone, fontSize: 14, margin: 0, fontFamily: "Arial, sans-serif" }}>HSK3 · Học tiếng Trung</p>
+        </div>
+        <div style={card}>
+          {!sent ? (
+            <>
+              <p style={{ color: C.charcoal, fontSize: 14, marginBottom: 16, fontFamily: "Arial, sans-serif" }}>
+                Nhập email để đăng nhập — chúng tôi sẽ gửi magic link cho bạn.
+              </p>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleSend()}
+                placeholder="email@example.com"
+                style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
+              />
+              {error && <p style={{ color: C.error, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>{error}</p>}
+              <button onClick={handleSend} disabled={loading || !email.trim()} style={{ width: "100%", ...btn(loading || !email.trim() ? C.sand : C.terra, loading || !email.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
+                {loading ? "Đang gửi..." : "Gửi magic link"}
+              </button>
+            </>
+          ) : (
+            <div style={{ textAlign: "center", padding: "16px 0" }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
+              <p style={{ color: C.charcoal, fontSize: 14, fontFamily: "Arial, sans-serif", margin: 0 }}>
+                Đã gửi link tới <strong>{email}</strong>.<br />Kiểm tra email và click link để đăng nhập!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── APP ──────────────────────────────────────────────────────
 export default function App() {
-  const [tab, setTab]       = useState("flashcard");
-  const [weak, setWeak]     = useState([]);
-  const [streak, setStreak] = useState(0);
-  const [cat, setCat]       = useState("Tất cả");
-  const [prog, setProg]     = useState({});
+  const [user, setUser]         = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [tab, setTab]           = useState("flashcard");
+  const [weak, setWeak]         = useState([]);
+  const [streak, setStreak]     = useState(0);
+  const [cat, setCat]           = useState("Tất cả");
+  const [prog, setProg]         = useState({});
+  const [syncing, setSyncing]   = useState(false);
 
-  useEffect(() => { loadProg().then(p => setProg(p)); }, []);
+  // Auth listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
-  const words = cat === "Tất cả" ? W : W.filter(w => w.c === cat);
+  // Load progress from Supabase
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/progress", {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      const json = await res.json();
+      if (json.data) setProg(json.data);
+    };
+    load();
+  }, [user]);
 
-  const markWeak   = (w, note = "") => setWeak(p => p.find(x => x.h === w.h) ? p : [...p, { ...w, note }]);
-  const unmarkWeak = h => setWeak(p => p.filter(w => w.h !== h));
+  // Save progress to Supabase (debounced)
+  const saveProgress = useCallback(async (newProg) => {
+    if (!user) return;
+    setSyncing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ data: newProg })
+      });
+    } catch {}
+    setSyncing(false);
+  }, [user]);
 
   const recordAnswer = (hanzi, result) => {
     const np = updateProg(prog, hanzi, result);
     setProg(np);
-    saveProg(np);
+    saveProgress(np);
   };
 
+  const words = cat === "Tất cả" ? W : W.filter(w => w.c === cat);
+  const markWeak   = (w, note = "") => setWeak(p => p.find(x => x.h === w.h) ? p : [...p, { ...w, note }]);
+  const unmarkWeak = h => setWeak(p => p.filter(w => w.h !== h));
   const stats = getStats(words, prog);
   const pct   = words.length ? Math.round((stats.mastered / words.length) * 100) : 0;
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setProg({});
+    setWeak([]);
+  };
+
+  if (authLoading) return (
+    <div style={{ minHeight: "100vh", background: C.parchment, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: C.stone, fontFamily: "Arial, sans-serif" }}>Đang tải...</p>
+    </div>
+  );
+
+  if (!user) return <LoginScreen />;
 
   return (
     <div style={{ minHeight: "100vh", background: C.parchment, fontFamily: "Georgia, serif", padding: "40px 16px", display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
@@ -261,16 +249,16 @@ export default function App() {
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
             <div>
-              <h1 style={{ fontSize: 28, fontWeight: 500, color: C.nearBlack, margin: 0, letterSpacing: "-0.3px" }}>
-                漢語水平考試 HSK3
-              </h1>
+              <h1 style={{ fontSize: 28, fontWeight: 500, color: C.nearBlack, margin: 0, letterSpacing: "-0.3px" }}>漢語水平考試 HSK3</h1>
               <p style={{ fontSize: 13, color: C.stone, margin: "4px 0 0", fontFamily: "Arial, sans-serif" }}>
                 {W.length} từ vựng · {pct}% đã thuộc
+                {syncing && <span style={{ marginLeft: 8, color: C.warmSilver }}>· đang lưu...</span>}
               </p>
             </div>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <span style={{ ...pill(C.warningBg, C.warning), fontFamily: "Arial, sans-serif" }}>🔥 {streak}</span>
               <span style={{ ...pill(C.errorBg, C.error), fontFamily: "Arial, sans-serif" }}>⚑ {weak.length}</span>
+              <button onClick={handleLogout} title="Đăng xuất" style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 11, padding: "4px 8px", fontFamily: "Arial, sans-serif" }}>↩</button>
             </div>
           </div>
 
@@ -310,7 +298,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* Content */}
         <div style={{ padding: "24px 24px" }}>
           {tab === "flashcard" && <Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} />}
           {tab === "quiz"      && <Quiz words={words} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} />}
@@ -323,97 +310,35 @@ export default function App() {
 
 // ── FLASHCARD ────────────────────────────────────────────────
 function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordAnswer }) {
-  const [step, setStep]       = useState(0);
-  const [word, setWord]       = useState(() => pickWord(words, prog));
-  const [showP, setShowP]     = useState(false);
-  const [showM, setShowM]     = useState(false);
-  const [sent, setSent]       = useState("");
-  const [fb, setFb]           = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [step, setStep]         = useState(0);
+  const [word, setWord]         = useState(() => pickWord(words, prog));
+  const [showP, setShowP]       = useState(false);
+  const [showM, setShowM]       = useState(false);
+  const [sent, setSent]         = useState("");
+  const [fb, setFb]             = useState(null);
+  const [loading, setLoading]   = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [pron, setPron]       = useState(null);
+  const [pron, setPron]         = useState(null);
 
-  // FIX: pickWord on words change (e.g. category switch)
   useEffect(() => {
     setWord(pickWord(words, prog));
-    setStep(0);
-    setShowP(false);
-    setShowM(false);
-    setSent("");
-    setFb(null);
-    setPron(null);
-    setSpeaking(false);
+    setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null); setPron(null);
   }, [words]);
 
-  // FIX: all helper functions defined directly in component body, NOT inside useEffect
   const w = word || words[0];
+  const next = () => { setWord(pickWord(words, prog)); setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null); setPron(null); setSpeaking(false); };
+  const doSpeak = () => { setSpeaking(true); speak(w.h); setTimeout(() => setSpeaking(false), 1800); };
 
-  const next = () => {
-    setWord(pickWord(words, prog));
-    setStep(0);
-    setShowP(false);
-    setShowM(false);
-    setSent("");
-    setFb(null);
-    setPron(null);
-    setSpeaking(false);
-  };
-
-  const doSpeak = () => {
-    setSpeaking(true);
-    speak(w.h);
-    setTimeout(() => setSpeaking(false), 1800);
-  };
-
-  // FIX: single clean check function, no duplicates
   const check = async () => {
-    if (!sent.trim() || sent.length < 4) return;
+    if (!sent.trim()) return;
     setLoading(true);
     try {
-      const raw = await callAI(`
-Bạn là giáo viên HSK3 rất khó tính.
-
-Từ: "${w.h}" (${w.p} - ${w.m})
-Câu học sinh: "${sent}"
-
-Lịch sử:
-- Đúng: ${prog[w.h]?.correct || 0}
-- Tổng: ${prog[w.h]?.seen || 0}
-
-Chấm theo:
-1. Có dùng đúng từ "${w.h}" không
-2. Ngữ pháp đúng không
-3. Tự nhiên không
-
-Score:
-- good: đúng + tự nhiên
-- ok: hiểu được nhưng chưa tự nhiên
-- bad: sai
-
-Yêu cầu:
-- comment: 1 câu tiếng Việt, chỉ rõ lỗi
-- fix: nếu sai → sửa lại câu (bắt buộc có "${w.h}"), nếu đúng → null
-- example: 1 câu chuẩn, tự nhiên, bắt buộc có "${w.h}"
-
-Chỉ trả JSON:
-{
-  "score": "good|ok|bad",
-  "comment": "...",
-  "fix": "...|null",
-  "example": "...",
-  "ex_pinyin": "...",
-  "ex_vi": "..."
-}
-`);
+      const raw = await callAI(`Giáo viên tiếng Trung HSK3. Từ: "${w.h}" (${w.p} - ${w.m}). Câu HS: "${sent}". Trả về JSON duy nhất: {"score":"good/bad","comment":"nhận xét ngắn tiếng Việt","example":"câu mẫu dùng từ ${w.h}","ex_pinyin":"pinyin","ex_vi":"nghĩa TV"}`);
       const p = safeParse(raw);
-      if (!p) throw new Error("Parse fail");
-
-      setFb(p);
-      setStep(3);
-      setStreak(s => s + 1);
+      if (!p) throw new Error("parse fail");
+      setFb(p); setStep(3); setStreak(s => s + 1);
       recordAnswer(w.h, p.score);
       if (p.score === "bad") markWeak(w, p.comment);
-
     } catch {
       setFb({ score: "bad", comment: "⚠️ Lỗi kết nối", example: "", ex_pinyin: "", ex_vi: "" });
       setStep(3);
@@ -422,7 +347,6 @@ Chỉ trả JSON:
   };
 
   if (!w) return null;
-
   const isWeak = !!weak.find(x => x.h === w.h);
   const tone   = getTone(w.p || "");
   const pl     = getProgLabel(prog, w.h);
@@ -438,15 +362,11 @@ Chỉ trả JSON:
           </div>
           <div style={{ fontSize: 80, fontWeight: 500, color: C.terra, lineHeight: 1, marginBottom: 16 }}>{w.h}</div>
           <div style={{ marginBottom: 16 }}>
-            {showP
-              ? <p style={{ fontSize: 22, color: C.olive, margin: "0 0 6px", fontFamily: "Arial, sans-serif" }}>{w.p}</p>
+            {showP ? <p style={{ fontSize: 22, color: C.olive, margin: "0 0 6px", fontFamily: "Arial, sans-serif" }}>{w.p}</p>
               : <button onClick={() => setShowP(true)} style={{ ...btn(C.sand, C.charcoal, C.cream), marginBottom: 6, fontFamily: "Arial, sans-serif" }}>xem pinyin</button>}
-            {showM
-              ? <p style={{ fontSize: 15, color: C.charcoal, margin: 0, fontFamily: "Arial, sans-serif" }}>📖 {w.m}</p>
+            {showM ? <p style={{ fontSize: 15, color: C.charcoal, margin: 0, fontFamily: "Arial, sans-serif" }}>📖 {w.m}</p>
               : <button onClick={() => setShowM(true)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>xem nghĩa</button>}
           </div>
-
-          {/* Pronunciation box */}
           <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 12, marginBottom: 14, textAlign: "left" }}>
             <p style={{ fontSize: 11, color: C.stone, margin: "0 0 8px", fontFamily: "Arial, sans-serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>Luyện phát âm</p>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999, fontSize: 12, marginBottom: 10, background: tone.bg, color: tone.fg, fontFamily: "Arial, sans-serif" }}>
@@ -456,7 +376,6 @@ Chỉ trả JSON:
               <button onClick={doSpeak} disabled={speaking} style={{ ...btn(speaking ? C.cream : C.terra, speaking ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
                 {speaking ? "đang phát..." : "nghe phát âm"}
               </button>
-              <button onClick={() => speak(w.p)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>chậm hơn</button>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => { setPron("good"); recordAnswer(w.h, "good"); }} style={{ flex: 1, ...btn(pron === "good" ? C.successBg : C.ivory, pron === "good" ? C.success : C.charcoal, pron === "good" ? C.success : C.cream), fontFamily: "Arial, sans-serif" }}>
@@ -467,7 +386,6 @@ Chỉ trả JSON:
               </button>
             </div>
           </div>
-
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={next} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>bỏ qua</button>
             <button onClick={() => setStep(2)} style={{ flex: 2, ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>đặt câu</button>
@@ -482,13 +400,8 @@ Chỉ trả JSON:
             <p style={{ color: C.stone, fontSize: 13, margin: "4px 0", fontFamily: "Arial, sans-serif" }}>{w.p} · {w.m}</p>
             <button onClick={doSpeak} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 12, fontFamily: "Arial, sans-serif" }}>{speaking ? "đang phát..." : "nghe lại"}</button>
           </div>
-          <textarea
-            value={sent}
-            onChange={e => setSent(e.target.value)}
-            placeholder={`Đặt câu có "${w.h}"...`}
-            style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, marginBottom: 12, outline: "none", resize: "none", boxSizing: "border-box", background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
-            rows={3}
-          />
+          <textarea value={sent} onChange={e => setSent(e.target.value)} placeholder={`Đặt câu có "${w.h}"...`}
+            style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, marginBottom: 12, outline: "none", resize: "none", boxSizing: "border-box", background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }} rows={3} />
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setStep(0)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>← lại</button>
             <button onClick={check} disabled={loading || !sent.trim()} style={{ flex: 2, ...btn(loading || !sent.trim() ? C.sand : C.terra, loading || !sent.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
@@ -498,19 +411,13 @@ Chỉ trả JSON:
         </div>
       )}
 
-{step === 3 && fb && (
+      {step === 3 && fb && (
         <div style={card}>
-          <div style={{ background: fb.score === "good" ? C.successBg : fb.score === "ok" ? C.warningBg : C.errorBg, border: `1px solid ${fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
-            <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>
-              {fb.score === "good" ? "Xuất sắc!" : fb.score === "ok" ? "Khá ổn!" : "Cần cải thiện"}
+          <div style={{ background: fb.score === "good" ? C.successBg : C.errorBg, border: `1px solid ${fb.score === "good" ? C.success : C.error}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
+            <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>
+              {fb.score === "good" ? "Xuất sắc!" : "Cần cải thiện"}
             </p>
             <p style={{ color: C.charcoal, fontSize: 13, marginBottom: fb.example ? 10 : 0, fontFamily: "Arial, sans-serif" }}>{fb.comment}</p>
-            {fb.fix && (
-              <div style={{ background: C.warningBg, borderRadius: 8, padding: "8px 10px", marginBottom: 8 }}>
-                <p style={{ fontSize: 11, color: C.warning, margin: "0 0 2px", fontFamily: "Arial, sans-serif", fontWeight: 500 }}>Sửa lại</p>
-                <p style={{ color: C.nearBlack, fontSize: 14, margin: 0 }}>{fb.fix}</p>
-              </div>
-            )}
             {fb.example && (
               <div style={{ background: C.ivory, borderRadius: 8, padding: 10 }}>
                 <p style={{ fontSize: 11, color: C.stone, margin: "0 0 4px", fontFamily: "Arial, sans-serif", fontWeight: 500 }}>Câu mẫu</p>
@@ -522,8 +429,7 @@ Chỉ trả JSON:
             )}
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            {!isWeak
-              ? <button onClick={() => markWeak(w)} style={{ flex: 1, ...btn(C.warningBg, C.warning, C.warning), fontSize: 12, fontFamily: "Arial, sans-serif" }}>đánh dấu ôn lại</button>
+            {!isWeak ? <button onClick={() => markWeak(w)} style={{ flex: 1, ...btn(C.warningBg, C.warning, C.warning), fontSize: 12, fontFamily: "Arial, sans-serif" }}>đánh dấu ôn lại</button>
               : <button onClick={() => unmarkWeak(w.h)} style={{ flex: 1, ...btn(C.sand, C.stone, C.cream), fontSize: 12, fontFamily: "Arial, sans-serif" }}>bỏ đánh dấu</button>}
           </div>
           <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>từ tiếp theo</button>
@@ -535,60 +441,42 @@ Chỉ trả JSON:
 
 // ── QUIZ ─────────────────────────────────────────────────────
 const TOTAL = 10;
-
-function buildQuiz(words) {
+function buildQuiz(words, prog) {
   if (words.length < 4) return [];
-  const pool = shuffle(words), result = [];
+  // Ưu tiên từ due/chưa học, sau đó fill bằng random
+  const now = Date.now();
+  const due = words.filter(w => !prog[w.h] || prog[w.h].due <= now);
+  const rest = shuffle(words.filter(w => prog[w.h] && prog[w.h].due > now));
+  const pool = shuffle([...due, ...rest]);
+  const result = [];
   for (let i = 0; i < TOTAL; i++) {
-    const w = pool[i % pool.length];
-    const r = Math.random();
-    if (r < 0.4) {
-      result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: Math.random() > 0.5 ? "meaning" : "pinyin" });
-    } else if (r < 0.7) {
-      result.push({ kind: "typing", w });
-    } else if (result.length === 0 || result[result.length - 1].kind === "match") {
-      result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: "meaning" });
-    } else {
-      const mp = shuffle(words).slice(0, 4);
-      result.push({ kind: "match", pairs: mp, rights: shuffle(mp.map(x => x.m)) });
-    }
+    const w = pool[i % pool.length], r = Math.random();
+    if (r < 0.4)      result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: Math.random() > 0.5 ? "meaning" : "pinyin" });
+    else if (r < 0.7) result.push({ kind: "typing", w });
+    else if (result.length === 0 || result[result.length-1].kind === "match") result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: "meaning" });
+    else { const mp = shuffle(words).slice(0, 4); result.push({ kind: "match", pairs: mp, rights: shuffle(mp.map(x => x.m)) }); }
   }
   return result;
 }
 
 function Quiz({ words, setStreak, prog, recordAnswer }) {
-  const [qs, setQs]           = useState([]);
-  const [qi, setQi]           = useState(0);
-  const [score, setScore]     = useState(0);
-  const [done, setDone]       = useState(false);
-  const [sel, setSel]         = useState(null);
-  const [typed, setTyped]     = useState("");
+  const [qs, setQs]             = useState([]);
+  const [qi, setQi]             = useState(0);
+  const [score, setScore]       = useState(0);
+  const [done, setDone]         = useState(false);
+  const [sel, setSel]           = useState(null);
+  const [typed, setTyped]       = useState("");
   const [typedRes, setTypedRes] = useState(null);
-  const [mSel, setMSel]       = useState({ l: null, r: null });
-  const [mDone, setMDone]     = useState([]);
-  const [mWrong, setMWrong]   = useState(null);
+  const [mSel, setMSel]         = useState({ l: null, r: null });
+  const [mDone, setMDone]       = useState([]);
+  const [mWrong, setMWrong]     = useState(null);
 
-  useEffect(() => { if (words.length >= 4) setQs(buildQuiz(words)); }, [words]);
-
-  const resetQ = () => { setSel(null); setTyped(""); setTypedRes(null); setMSel({ l: null, r: null }); setMDone([]); setMWrong(null); };
-  const next   = () => { if (qi + 1 >= TOTAL) { setDone(true); setStreak(s => s + 1); } else { setQi(i => i + 1); resetQ(); } };
-  const restart = () => { setQs(buildQuiz(words)); setQi(0); resetQ(); setScore(0); setDone(false); };
-
-  const handleMCQ = opt => {
-    if (sel) return;
-    const ok = opt.h === qs[qi].w.h;
-    setSel(opt.h);
-    if (ok) setScore(s => s + 1);
-    recordAnswer(qs[qi].w.h, ok ? "good" : "bad");
-  };
-
-  const handleTyping = () => {
-    if (!typed.trim()) return;
-    const ok = normPin(typed) === normPin(qs[qi].w.p);
-    setTypedRes(ok ? "good" : "bad");
-    if (ok) setScore(s => s + 1);
-    recordAnswer(qs[qi].w.h, ok ? "good" : "bad");
-  };
+  useEffect(() => { if (words.length >= 4) setQs(buildQuiz(words, prog)); }, [words]);
+  const resetQ  = () => { setSel(null); setTyped(""); setTypedRes(null); setMSel({ l: null, r: null }); setMDone([]); setMWrong(null); };
+  const next    = () => { if (qi + 1 >= TOTAL) { setDone(true); setStreak(s => s + 1); } else { setQi(i => i + 1); resetQ(); } };
+  const restart = () => { setQs(buildQuiz(words, prog)); setQi(0); resetQ(); setScore(0); setDone(false); };
+  const handleMCQ = opt => { if (sel) return; const ok = opt.h === qs[qi].w.h; setSel(opt.h); if (ok) setScore(s => s + 1); recordAnswer(qs[qi].w.h, ok ? "good" : "bad"); };
+  const handleTyping = () => { if (!typed.trim()) return; const ok = normPin(typed) === normPin(qs[qi].w.p); setTypedRes(ok ? "good" : "bad"); if (ok) setScore(s => s + 1); recordAnswer(qs[qi].w.h, ok ? "good" : "bad"); };
 
   if (!qs.length) return <p style={{ color: C.stone, fontFamily: "Arial, sans-serif", textAlign: "center" }}>Cần ít nhất 4 từ.</p>;
 
@@ -609,7 +497,6 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
 
   const q = qs[qi];
   const labels = { mcq: "trắc nghiệm", typing: "gõ pinyin", match: "ghép cặp" };
-
   return (
     <div style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -633,16 +520,8 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
             {q.opts.map(opt => {
               const ok = opt.h === q.w.h, picked = sel === opt.h;
               let bg = C.ivory, border = C.cream, color = C.charcoal;
-              if (sel) {
-                if (ok)          { bg = C.successBg; border = C.success; color = C.success; }
-                else if (picked) { bg = C.errorBg;   border = C.error;   color = C.error; }
-                else             { bg = C.parchment;  border = C.cream;   color = C.stone; }
-              }
-              return (
-                <button key={opt.h} onClick={() => handleMCQ(opt)} style={{ padding: 10, borderRadius: 10, fontSize: 12, textAlign: "center", border: `1px solid ${border}`, background: bg, color, cursor: "pointer", minHeight: 44, fontFamily: "Arial, sans-serif", transition: "all 0.1s" }}>
-                  {q.type === "meaning" ? opt.m : opt.p}
-                </button>
-              );
+              if (sel) { if (ok) { bg = C.successBg; border = C.success; color = C.success; } else if (picked) { bg = C.errorBg; border = C.error; color = C.error; } else { bg = C.parchment; border = C.cream; color = C.stone; } }
+              return <button key={opt.h} onClick={() => handleMCQ(opt)} style={{ padding: 10, borderRadius: 10, fontSize: 12, textAlign: "center", border: `1px solid ${border}`, background: bg, color, cursor: "pointer", minHeight: 44, fontFamily: "Arial, sans-serif", transition: "all 0.1s" }}>{q.type === "meaning" ? opt.m : opt.p}</button>;
             })}
           </div>
           {sel && <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= TOTAL ? "xem kết quả" : "tiếp theo"}</button>}
@@ -656,26 +535,14 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
             <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
             <p style={{ color: C.stone, fontSize: 13, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.m}</p>
           </div>
-          {typedRes && (
-            <div style={{ background: typedRes === "good" ? C.successBg : C.errorBg, border: `1px solid ${typedRes === "good" ? C.success : C.error}`, borderRadius: 8, padding: "8px 12px", textAlign: "center", marginBottom: 8, fontSize: 13, fontFamily: "Arial, sans-serif", color: typedRes === "good" ? C.success : C.error }}>
-              {typedRes === "good" ? `Đúng! Pinyin: ${q.w.p}` : `Chưa đúng. Đáp án: ${q.w.p}`}
-            </div>
-          )}
+          {typedRes && <div style={{ background: typedRes === "good" ? C.successBg : C.errorBg, border: `1px solid ${typedRes === "good" ? C.success : C.error}`, borderRadius: 8, padding: "8px 12px", textAlign: "center", marginBottom: 8, fontSize: 13, fontFamily: "Arial, sans-serif", color: typedRes === "good" ? C.success : C.error }}>{typedRes === "good" ? `Đúng! Pinyin: ${q.w.p}` : `Chưa đúng. Đáp án: ${q.w.p}`}</div>}
           {!typedRes ? (
             <div>
-              <input
-                value={typed}
-                onChange={e => setTyped(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") handleTyping(); }}
-                placeholder="gõ pinyin rồi Enter..."
-                style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 8, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
-                autoFocus
-              />
+              <input value={typed} onChange={e => setTyped(e.target.value)} onKeyDown={e => { if (e.key === "Enter") handleTyping(); }} placeholder="gõ pinyin rồi Enter..."
+                style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 8, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }} autoFocus />
               <button onClick={handleTyping} disabled={!typed.trim()} style={{ width: "100%", ...btn(typed.trim() ? C.terra : C.sand, typed.trim() ? C.ivory : C.stone), fontFamily: "Arial, sans-serif" }}>kiểm tra</button>
             </div>
-          ) : (
-            <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= TOTAL ? "xem kết quả" : "tiếp theo"}</button>
-          )}
+          ) : <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= TOTAL ? "xem kết quả" : "tiếp theo"}</button>}
         </div>
       )}
 
@@ -686,26 +553,16 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
 
 function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore, recordAnswer, next, qi }) {
   const allDone = mDone.length === q.pairs.length;
-
   const pick = (side, val) => {
     setMWrong(null);
     const ns = side === "l" ? { l: mSel.l === val ? null : val, r: mSel.r } : { l: mSel.l, r: mSel.r === val ? null : val };
     setMSel(ns);
     if (ns.l && ns.r) {
       const lw = q.pairs.find(x => x.h === ns.l);
-      if (lw && lw.m === ns.r) {
-        const nd = [...mDone, lw];
-        setMDone(nd);
-        setMSel({ l: null, r: null });
-        if (nd.length === q.pairs.length) { setScore(s => s + 1); nd.forEach(w => recordAnswer(w.h, "good")); }
-      } else {
-        setMWrong(ns.l);
-        recordAnswer(ns.l, "bad");
-        setTimeout(() => { setMSel({ l: null, r: null }); setMWrong(null); }, 1800);
-      }
+      if (lw && lw.m === ns.r) { const nd = [...mDone, lw]; setMDone(nd); setMSel({ l: null, r: null }); if (nd.length === q.pairs.length) { setScore(s => s + 1); nd.forEach(w => recordAnswer(w.h, "good")); } }
+      else { setMWrong(ns.l); recordAnswer(ns.l, "bad"); setTimeout(() => { setMSel({ l: null, r: null }); setMWrong(null); }, 1800); }
     }
   };
-
   return (
     <div>
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: "8px 12px", textAlign: "center", marginBottom: 10 }}>
@@ -715,23 +572,19 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.pairs.map(pw => {
             const done = !!mDone.find(x => x.h === pw.h), selL = mSel.l === pw.h, wrong = mWrong === pw.h;
-            return (
-              <button key={pw.h} onClick={() => { if (!done) pick("l", pw.h); }} style={{ padding: 10, borderRadius: 10, fontSize: 20, fontWeight: 500, minHeight: 52, cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : wrong ? C.error : selL ? C.terra : C.cream}`, background: done ? C.successBg : selL ? C.terraLight : C.ivory, color: done ? C.success : C.terra, textAlign: "center" }}>
-                {pw.h}
-                {wrong && <div style={{ fontSize: 10, color: C.error, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
-                {done  && <div style={{ fontSize: 10, color: C.success, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
-              </button>
-            );
+            return <button key={pw.h} onClick={() => { if (!done) pick("l", pw.h); }} style={{ padding: 10, borderRadius: 10, fontSize: 20, fontWeight: 500, minHeight: 52, cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : wrong ? C.error : selL ? C.terra : C.cream}`, background: done ? C.successBg : selL ? C.terraLight : C.ivory, color: done ? C.success : C.terra, textAlign: "center" }}>
+              {pw.h}
+              {wrong && <div style={{ fontSize: 10, color: C.error, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
+              {done  && <div style={{ fontSize: 10, color: C.success, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
+            </button>;
           })}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.rights.map(meaning => {
             const done = !!mDone.find(x => x.m === meaning), selR = mSel.r === meaning;
-            return (
-              <button key={meaning} onClick={() => { if (!done) pick("r", meaning); }} style={{ padding: 8, borderRadius: 10, fontSize: 11, minHeight: 52, textAlign: "center", lineHeight: "1.4", cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : selR ? C.terra : C.cream}`, background: done ? C.successBg : selR ? C.terraLight : C.ivory, color: done ? C.success : C.charcoal, fontFamily: "Arial, sans-serif" }}>
-                {meaning}
-              </button>
-            );
+            return <button key={meaning} onClick={() => { if (!done) pick("r", meaning); }} style={{ padding: 8, borderRadius: 10, fontSize: 11, minHeight: 52, textAlign: "center", lineHeight: "1.4", cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : selR ? C.terra : C.cream}`, background: done ? C.successBg : selR ? C.terraLight : C.ivory, color: done ? C.success : C.charcoal, fontFamily: "Arial, sans-serif" }}>
+              {meaning}
+            </button>;
           })}
         </div>
       </div>
@@ -753,40 +606,20 @@ function Review({ weak, unmarkWeak }) {
   const [checking, setChecking]   = useState(false);
   const [showFb, setShowFb]       = useState(false);
 
-  const pool = weak.length >= 3
-    ? weak
-    : [...weak, ...W.filter(w => !weak.find(x => x.h === w.h)).slice(0, 6 - weak.length)];
+  const pool = weak.length >= 3 ? weak : [...weak, ...W.filter(w => !weak.find(x => x.h === w.h)).slice(0, 6 - weak.length)];
 
   const generate = async () => {
     setLoading(true); setMode("reading"); setShowTrans(false); setShowPin(false);
     setUserTrans(""); setFb(null); setShowFb(false); setContent(null);
     const needed = Math.min(type === "dialogue" ? 3 : 4, pool.length);
-    const weakPart = shuffle(weak).slice(0, needed);
-    const remaining = needed - weakPart.length;
-    const fillPart = remaining > 0
-      ? shuffle(W.filter(w => !weak.find(x => x.h === w.h))).slice(0, remaining)
-      : [];
-    const picked = [...weakPart, ...fillPart];
+    const picked = shuffle(pool).slice(0, needed);
     const wl = picked.map(w => w.h).join(", ");
     try {
-      const raw = await callAI(
-          `HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng các từ sau: ${wl}.
-
-        Quy tắc bắt buộc:
-        - "pinyin" phải là phiên âm Latin 100%, TUYỆT ĐỐI không có chữ Hán nào lẫn vào
-        - Mỗi chữ Hán đều phải có pinyin tương ứng, kể cả tên riêng
-        - Không thêm âm thừa vào pinyin
-
-        Chỉ trả JSON, không giải thích:
-        {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["chỉ chữ Hán"]}`,
-        1500
-        );
+      const raw = await callAI(`HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng các từ: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1500);
       const p = safeParse(raw);
-      if (!p) throw new Error("Parse fail");
+      if (!p) throw new Error("parse fail");
       setContent(p);
-    } catch {
-      setMode("menu");
-    }
+    } catch { setMode("menu"); }
     setLoading(false);
   };
 
@@ -795,30 +628,14 @@ function Review({ weak, unmarkWeak }) {
     if (!userTrans.trim()) return;
     setChecking(true);
     try {
-      const raw = await callAI(
-        `Bạn là giáo viên tiếng Trung chấm bài dịch cho học sinh Việt Nam học HSK3.
-Đoạn gốc tiếng Trung: "${content.chinese}"
-Bản dịch chuẩn tiếng Việt: "${content.vietnamese}"
-Bản dịch của học sinh: "${userTrans}"
-Yêu cầu chấm:
-- Học sinh dịch sang tiếng Việt thuần, KHÔNG yêu cầu dùng từ Hán Việt
-- "good": dịch đúng nghĩa, tự nhiên, dễ hiểu
-- "ok": hiểu đúng ý chính nhưng thiếu chi tiết hoặc hơi cứng
-- "bad": sai nghĩa hoặc bỏ sót ý quan trọng
-Chỉ trả JSON, không giải thích thêm:
-{"score":"good|ok|bad","comment":"1 câu tiếng Việt nhận xét ngắn gọn"}`
-      );
+      const raw = await callAI(`HSK3. Gốc:"${content.chinese}". Chuẩn:"${content.vietnamese}". HS:"${userTrans}". JSON:{"score":"good/ok/bad","comment":"1-2 câu TV"}`);
       const p = safeParse(raw);
       setFb(p || { score: "bad", comment: "⚠️ Lỗi phân tích." });
       setShowFb(true);
-    } catch {
-      setFb({ score: "bad", comment: "⚠️ Lỗi kết nối." });
-      setShowFb(true);
-    }
+    } catch { setFb({ score: "bad", comment: "⚠️ Lỗi kết nối." }); setShowFb(true); }
     setChecking(false);
   };
 
-  // ── MENU ──
   if (mode === "menu") return (
     <div style={card}>
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 12, marginBottom: 14 }}>
@@ -828,8 +645,7 @@ Chỉ trả JSON, không giải thích thêm:
           : <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {weak.map(w => (
                 <span key={w.h} style={{ ...pill(C.errorBg, C.error), display: "inline-flex", alignItems: "center", gap: 4, border: `1px solid ${C.error}` }}>
-                  {w.h}
-                  <button onClick={() => unmarkWeak(w.h)} style={{ color: C.warmSilver, background: "none", border: "none", cursor: "pointer", fontSize: 10, padding: 0, lineHeight: 1 }}>✕</button>
+                  {w.h}<button onClick={() => unmarkWeak(w.h)} style={{ color: C.warmSilver, background: "none", border: "none", cursor: "pointer", fontSize: 10, padding: 0, lineHeight: 1 }}>✕</button>
                 </span>
               ))}
             </div>}
@@ -844,53 +660,30 @@ Chỉ trả JSON, không giải thích thêm:
     </div>
   );
 
-  // ── LOADING ──
-  if (loading || !content) return (
-    <div style={{ ...card, textAlign: "center", padding: 40 }}>
-      <p style={{ color: C.stone, fontFamily: "Arial, sans-serif" }}>Đang tạo bài...</p>
-    </div>
-  );
+  if (loading || !content) return <div style={{ ...card, textAlign: "center", padding: 40 }}><p style={{ color: C.stone, fontFamily: "Arial, sans-serif" }}>Đang tạo bài...</p></div>;
 
-  // ── READING ──
   return (
     <div style={card}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-        {(content.words_used || []).map(w => {
-          const hanzi = w.split(" ")[0];
-          return <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{hanzi}</span>;
-        })}
+        {(content.words_used || []).map(w => <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{w}</span>)}
       </div>
-
-      {/* Chữ Hán + pinyin */}
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 14, marginBottom: 12 }}>
         <p style={{ fontSize: 11, color: C.stone, fontWeight: 500, marginBottom: 8, fontFamily: "Arial, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>{type === "dialogue" ? "hội thoại" : "đoạn văn"}</p>
         <p style={{ color: C.nearBlack, lineHeight: 1.7, fontSize: 15, whiteSpace: "pre-line", margin: "0 0 10px" }}>{content.chinese}</p>
         <button onClick={() => setShowPin(v => !v)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 11, fontFamily: "Arial, sans-serif" }}>{showPin ? "ẩn pinyin" : "xem pinyin"}</button>
         {showPin && <p style={{ color: C.stone, fontSize: 12, marginTop: 8, lineHeight: 1.7, whiteSpace: "pre-line", fontFamily: "Arial, sans-serif" }}>{content.pinyin}</p>}
       </div>
-
-      {/* Ô dịch — luôn hiển thị, readOnly sau khi chấm */}
       <div style={{ marginBottom: 12 }}>
         <p style={{ fontSize: 13, fontWeight: 500, color: C.charcoal, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>Dịch thử đi</p>
-        <textarea
-          value={userTrans}
-          onChange={e => setUserTrans(e.target.value)}
-          readOnly={!!fb}
-          placeholder="Gõ bản dịch tiếng Việt..."
-          style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 13, outline: "none", resize: "none", boxSizing: "border-box", background: fb ? C.cream : C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
-          rows={4}
-        />
+        <textarea value={userTrans} onChange={e => setUserTrans(e.target.value)} readOnly={!!fb} placeholder="Gõ bản dịch tiếng Việt..."
+          style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 13, outline: "none", resize: "none", boxSizing: "border-box", background: fb ? C.cream : C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }} rows={4} />
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-          <button onClick={() => setShowTrans(v => !v)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>
-            {showTrans ? "ẩn đáp án" : "xem đáp án"}
-          </button>
+          <button onClick={() => setShowTrans(v => !v)} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>{showTrans ? "ẩn đáp án" : "xem đáp án"}</button>
           <button onClick={checkTrans} disabled={checking || (!fb && !userTrans.trim())} style={{ flex: 1, ...btn(checking || (!fb && !userTrans.trim()) ? C.sand : C.terra, checking || (!fb && !userTrans.trim()) ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
             {checking ? "đang chấm..." : fb ? (showFb ? "ẩn kết quả" : "xem kết quả") : "chấm bài"}
           </button>
         </div>
       </div>
-
-      {/* Kết quả chấm */}
       {fb && showFb && (
         <div style={{ background: fb.score === "good" ? C.successBg : fb.score === "ok" ? C.warningBg : C.errorBg, border: `1px solid ${fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <p style={{ fontWeight: 500, color: fb.score === "good" ? C.success : fb.score === "ok" ? C.warning : C.error, marginBottom: 4, fontFamily: "Arial, sans-serif", fontSize: 14 }}>
@@ -899,15 +692,12 @@ Chỉ trả JSON, không giải thích thêm:
           <p style={{ color: C.charcoal, fontSize: 13, margin: 0, fontFamily: "Arial, sans-serif" }}>{fb.comment}</p>
         </div>
       )}
-
-      {/* Đáp án chuẩn */}
       {showTrans && (
         <div style={{ background: C.successBg, border: `1px solid ${C.success}`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <p style={{ fontSize: 11, fontWeight: 500, color: C.success, marginBottom: 6, fontFamily: "Arial, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>Bản dịch chuẩn</p>
           <p style={{ color: C.charcoal, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-line", margin: 0, fontFamily: "Arial, sans-serif" }}>{content.vietnamese}</p>
         </div>
       )}
-
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={() => { setMode("menu"); setContent(null); }} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>← menu</button>
         <button onClick={generate} style={{ flex: 1, ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>bài mới</button>
