@@ -106,20 +106,24 @@ const pill = (bg, fg) => ({ background: bg, color: fg, borderRadius: 999, paddin
 
 // ── LOGIN SCREEN ─────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
+  const [msg, setMsg]           = useState("");
 
-  const handleSend = async () => {
-    if (!email.trim()) return;
-    setLoading(true); setError("");
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.origin }
-    });
-    if (error) setError(error.message);
-    else setSent(true);
+  const handle = async () => {
+    if (!email.trim() || !password.trim()) return;
+    setLoading(true); setError(""); setMsg("");
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email: email.trim(), password });
+      if (error) setError(error.message);
+      else setMsg("Đăng ký thành công! Kiểm tra email để xác nhận tài khoản.");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) setError("Email hoặc mật khẩu không đúng.");
+    }
     setLoading(false);
   };
 
@@ -131,38 +135,45 @@ function LoginScreen({ onLogin }) {
           <p style={{ color: C.stone, fontSize: 14, margin: 0, fontFamily: "Arial, sans-serif" }}>HSK3 · Học tiếng Trung</p>
         </div>
         <div style={card}>
-          {!sent ? (
-            <>
-              <p style={{ color: C.charcoal, fontSize: 14, marginBottom: 16, fontFamily: "Arial, sans-serif" }}>
-                Nhập email để đăng nhập — chúng tôi sẽ gửi magic link cho bạn.
-              </p>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleSend()}
-                placeholder="email@example.com"
-                style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
-              />
-              {error && <p style={{ color: C.error, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>{error}</p>}
-              <button onClick={handleSend} disabled={loading || !email.trim()} style={{ width: "100%", ...btn(loading || !email.trim() ? C.sand : C.terra, loading || !email.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
-                {loading ? "Đang gửi..." : "Gửi magic link"}
-              </button>
-            </>
-          ) : (
-            <div style={{ textAlign: "center", padding: "16px 0" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
-              <p style={{ color: C.charcoal, fontSize: 14, fontFamily: "Arial, sans-serif", margin: 0 }}>
-                Đã gửi link tới <strong>{email}</strong>.<br />Kiểm tra email và click link để đăng nhập!
-              </p>
-            </div>
-          )}
+          <p style={{ color: C.charcoal, fontSize: 14, marginBottom: 16, fontFamily: "Arial, sans-serif", fontWeight: 500 }}>
+            {isSignUp ? "Tạo tài khoản mới" : "Đăng nhập"}
+          </p>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handle()}
+            placeholder="Email"
+            style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 10, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handle()}
+            placeholder="Mật khẩu"
+            style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 12, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }}
+          />
+          {error && <p style={{ color: C.error, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>{error}</p>}
+          {msg   && <p style={{ color: C.success, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>{msg}</p>}
+          <button
+            onClick={handle}
+            disabled={loading || !email.trim() || !password.trim()}
+            style={{ width: "100%", ...btn(loading || !email.trim() || !password.trim() ? C.sand : C.terra, loading || !email.trim() || !password.trim() ? C.stone : C.ivory), fontFamily: "Arial, sans-serif", marginBottom: 10 }}
+          >
+            {loading ? "Đang xử lý..." : isSignUp ? "Tạo tài khoản" : "Đăng nhập"}
+          </button>
+          <button
+            onClick={() => { setIsSignUp(v => !v); setError(""); setMsg(""); }}
+            style={{ width: "100%", ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif", fontSize: 12 }}
+          >
+            {isSignUp ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
-
 // ── APP ──────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser]         = useState(null);
@@ -173,6 +184,7 @@ export default function App() {
   const [cat, setCat]           = useState("Tất cả");
   const [prog, setProg]         = useState({});
   const [syncing, setSyncing]   = useState(false);
+  const [progLoaded, setProgLoaded] = useState(false);
 
   // Auth listener
   useEffect(() => {
@@ -189,13 +201,14 @@ export default function App() {
   // Load progress from Supabase
   useEffect(() => {
     if (!user) return;
-    const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch("/api/progress", {
-        headers: { Authorization: `Bearer ${session.access_token}` }
-      });
-      const json = await res.json();
-      if (json.data) setProg(json.data);
+   const load = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/progress", {
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+    const json = await res.json();
+    if (json.data) setProg(json.data);
+    setProgLoaded(true); // thêm dòng này
     };
     load();
   }, [user]);
@@ -220,7 +233,11 @@ export default function App() {
     setProg(np);
     saveProgress(np);
   };
-
+  const updateAnswer = (hanzi, result) => {
+  const np = updateProg(prog, hanzi, result);
+  setProg(np);
+  return np; // trả về prog mới để dùng tiếp
+  };
   const words = cat === "Tất cả" ? W : W.filter(w => w.c === cat);
   const markWeak   = (w, note = "") => setWeak(p => p.find(x => x.h === w.h) ? p : [...p, { ...w, note }]);
   const unmarkWeak = h => setWeak(p => p.filter(w => w.h !== h));
@@ -231,6 +248,7 @@ export default function App() {
     await supabase.auth.signOut();
     setProg({});
     setWeak([]);
+    setProgLoaded(false);
   };
 
   if (authLoading) return (
@@ -299,9 +317,14 @@ export default function App() {
         </div>
 
         <div style={{ padding: "24px 24px" }}>
-          {tab === "flashcard" && <Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} />}
-          {tab === "quiz"      && <Quiz words={words} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} />}
-          {tab === "review"    && <Review weak={weak} unmarkWeak={unmarkWeak} />}
+          {!progLoaded
+            ? <p style={{ color: C.stone, fontFamily: "Arial, sans-serif", textAlign: "center" }}>Đang tải tiến độ...</p>
+            : <>
+                {tab === "flashcard" && <Flashcard words={words} weak={weak} markWeak={markWeak} unmarkWeak={unmarkWeak} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} />}
+                {tab === "quiz"      && <Quiz words={words} setStreak={setStreak} prog={prog} recordAnswer={recordAnswer} updateAnswer={updateAnswer} saveProgress={saveProgress} />}
+                {tab === "review"    && <Review weak={weak} unmarkWeak={unmarkWeak} />}
+              </>
+          }
         </div>
       </div>
     </div>
@@ -441,25 +464,46 @@ function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordA
 
 // ── QUIZ ─────────────────────────────────────────────────────
 const TOTAL = 10;
+
 function buildQuiz(words, prog) {
   if (words.length < 4) return [];
-  // Ưu tiên từ due/chưa học, sau đó fill bằng random
   const now = Date.now();
-  const due = words.filter(w => !prog[w.h] || prog[w.h].due <= now);
-  const rest = shuffle(words.filter(w => prog[w.h] && prog[w.h].due > now));
-  const pool = shuffle([...due, ...rest]);
+
+  // Phân loại — không có rest
+  const unseen = words.filter(w => !prog[w.h]);
+  const weak   = words.filter(w => prog[w.h] && prog[w.h].correct / Math.max(prog[w.h].seen, 1) < 0.6);
+  const due    = words.filter(w => prog[w.h] && prog[w.h].due <= now && prog[w.h].correct / Math.max(prog[w.h].seen, 1) >= 0.6);
+
+  // Gộp theo thứ tự ưu tiên, dedup
+  const seen = new Set();
+  const pool = [];
+  for (const w of [...shuffle(unseen), ...shuffle(weak), ...shuffle(due)]) {
+    if (!seen.has(w.h)) { seen.add(w.h); pool.push(w); }
+  }
+
+  // Nếu không đủ 10 thì fill thêm unseen/weak chưa có
+  if (pool.length < TOTAL) {
+    for (const w of shuffle(words)) {
+      if (!seen.has(w.h)) { seen.add(w.h); pool.push(w); }
+      if (pool.length >= TOTAL) break;
+    }
+  }
+
+  const picked = pool.slice(0, TOTAL);
+
   const result = [];
   for (let i = 0; i < TOTAL; i++) {
-    const w = pool[i % pool.length], r = Math.random();
+    const w = picked[i % picked.length];
+    const r = Math.random();
     if (r < 0.4)      result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: Math.random() > 0.5 ? "meaning" : "pinyin" });
     else if (r < 0.7) result.push({ kind: "typing", w });
-    else if (result.length === 0 || result[result.length-1].kind === "match") result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: "meaning" });
-    else { const mp = shuffle(words).slice(0, 4); result.push({ kind: "match", pairs: mp, rights: shuffle(mp.map(x => x.m)) }); }
+    else if (result.length === 0 || result[result.length - 1].kind === "match") result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: "meaning" });
+    else { const mp = shuffle([...weak, ...unseen, ...due]).slice(0, 4); result.push({ kind: "match", pairs: mp.length >= 4 ? mp : shuffle(words).slice(0,4), rights: shuffle((mp.length >= 4 ? mp : shuffle(words).slice(0,4)).map(x => x.m)) }); }
   }
   return result;
 }
 
-function Quiz({ words, setStreak, prog, recordAnswer }) {
+function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress }) {
   const [qs, setQs]             = useState([]);
   const [qi, setQi]             = useState(0);
   const [score, setScore]       = useState(0);
@@ -472,20 +516,46 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
   const [mWrong, setMWrong]     = useState(null);
 
   useEffect(() => { if (words.length >= 4) setQs(buildQuiz(words, prog)); }, [words]);
+
   const resetQ  = () => { setSel(null); setTyped(""); setTypedRes(null); setMSel({ l: null, r: null }); setMDone([]); setMWrong(null); };
-  const next    = () => { if (qi + 1 >= TOTAL) { setDone(true); setStreak(s => s + 1); } else { setQi(i => i + 1); resetQ(); } };
+
+  const next = () => {
+    if (qi + 1 >= qs.length) {
+      setDone(true);
+      setStreak(s => s + 1);
+      saveProgress(prog); // save 1 lần duy nhất khi kết thúc
+    } else {
+      setQi(i => i + 1);
+      resetQ();
+    }
+  };
+
   const restart = () => { setQs(buildQuiz(words, prog)); setQi(0); resetQ(); setScore(0); setDone(false); };
-  const handleMCQ = opt => { if (sel) return; const ok = opt.h === qs[qi].w.h; setSel(opt.h); if (ok) setScore(s => s + 1); recordAnswer(qs[qi].w.h, ok ? "good" : "bad"); };
-  const handleTyping = () => { if (!typed.trim()) return; const ok = normPin(typed) === normPin(qs[qi].w.p); setTypedRes(ok ? "good" : "bad"); if (ok) setScore(s => s + 1); recordAnswer(qs[qi].w.h, ok ? "good" : "bad"); };
+
+  const handleMCQ = opt => {
+    if (sel) return;
+    const ok = opt.h === qs[qi].w.h;
+    setSel(opt.h);
+    if (ok) setScore(s => s + 1);
+    updateAnswer(qs[qi].w.h, ok ? "ok" : "bad");
+  };
+
+  const handleTyping = () => {
+    if (!typed.trim()) return;
+    const ok = normPin(typed) === normPin(qs[qi].w.p);
+    setTypedRes(ok ? "good" : "bad");
+    if (ok) setScore(s => s + 1);
+    updateAnswer(qs[qi].w.h, ok ? "good" : "bad");
+  };
 
   if (!qs.length) return <p style={{ color: C.stone, fontFamily: "Arial, sans-serif", textAlign: "center" }}>Cần ít nhất 4 từ.</p>;
 
   if (done) {
-    const pct = Math.round(score / TOTAL * 100);
+    const pct = Math.round(score / qs.length * 100);
     return (
       <div style={{ ...card, textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 8 }}>{pct >= 80 ? "🏆" : pct >= 50 ? "👍" : "💪"}</div>
-        <p style={{ fontSize: 28, fontWeight: 500, color: C.nearBlack, margin: "0 0 4px" }}>{score}/{TOTAL}</p>
+        <p style={{ fontSize: 28, fontWeight: 500, color: C.nearBlack, margin: "0 0 4px" }}>{score}/{qs.length}</p>
         <div style={{ background: C.sand, borderRadius: 999, height: 6, margin: "12px 0 8px" }}>
           <div style={{ background: pct >= 80 ? C.terra : "#d97757", height: 6, borderRadius: 999, width: `${pct}%`, transition: "width 0.5s" }} />
         </div>
@@ -501,12 +571,12 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
     <div style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <span style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: C.stone }}>
-          câu {qi + 1}/{TOTAL} <span style={{ ...pill(C.sand, C.charcoal), marginLeft: 4 }}>{labels[q.kind]}</span>
+          câu {qi + 1}/{qs.length} <span style={{ ...pill(C.sand, C.charcoal), marginLeft: 4 }}>{labels[q.kind]}</span>
         </span>
         <span style={{ fontFamily: "Arial, sans-serif", fontSize: 13, color: C.terra, fontWeight: 500 }}>{score} đúng</span>
       </div>
       <div style={{ background: C.sand, borderRadius: 999, height: 3, marginBottom: 16 }}>
-        <div style={{ background: C.terra, height: 3, borderRadius: 999, width: `${(qi / TOTAL) * 100}%` }} />
+        <div style={{ background: C.terra, height: 3, borderRadius: 999, width: `${(qi / qs.length) * 100}%` }} />
       </div>
 
       {q.kind === "mcq" && (
@@ -524,7 +594,7 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
               return <button key={opt.h} onClick={() => handleMCQ(opt)} style={{ padding: 10, borderRadius: 10, fontSize: 12, textAlign: "center", border: `1px solid ${border}`, background: bg, color, cursor: "pointer", minHeight: 44, fontFamily: "Arial, sans-serif", transition: "all 0.1s" }}>{q.type === "meaning" ? opt.m : opt.p}</button>;
             })}
           </div>
-          {sel && <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= TOTAL ? "xem kết quả" : "tiếp theo"}</button>}
+          {sel && <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= qs.length ? "xem kết quả" : "tiếp theo"}</button>}
         </div>
       )}
 
@@ -542,16 +612,16 @@ function Quiz({ words, setStreak, prog, recordAnswer }) {
                 style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", marginBottom: 8, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }} autoFocus />
               <button onClick={handleTyping} disabled={!typed.trim()} style={{ width: "100%", ...btn(typed.trim() ? C.terra : C.sand, typed.trim() ? C.ivory : C.stone), fontFamily: "Arial, sans-serif" }}>kiểm tra</button>
             </div>
-          ) : <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= TOTAL ? "xem kết quả" : "tiếp theo"}</button>}
+          ) : <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= qs.length ? "xem kết quả" : "tiếp theo"}</button>}
         </div>
       )}
 
-      {q.kind === "match" && <MatchQ q={q} mDone={mDone} mSel={mSel} mWrong={mWrong} setMSel={setMSel} setMDone={setMDone} setMWrong={setMWrong} setScore={setScore} recordAnswer={recordAnswer} next={next} qi={qi} />}
+      {q.kind === "match" && <MatchQ q={q} mDone={mDone} mSel={mSel} mWrong={mWrong} setMSel={setMSel} setMDone={setMDone} setMWrong={setMWrong} setScore={setScore} updateAnswer={updateAnswer} next={next} qi={qi} total={qs.length} />}
     </div>
   );
 }
 
-function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore, recordAnswer, next, qi }) {
+function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore, updateAnswer, next, qi, total }) {
   const allDone = mDone.length === q.pairs.length;
   const pick = (side, val) => {
     setMWrong(null);
@@ -559,8 +629,16 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
     setMSel(ns);
     if (ns.l && ns.r) {
       const lw = q.pairs.find(x => x.h === ns.l);
-      if (lw && lw.m === ns.r) { const nd = [...mDone, lw]; setMDone(nd); setMSel({ l: null, r: null }); if (nd.length === q.pairs.length) { setScore(s => s + 1); nd.forEach(w => recordAnswer(w.h, "good")); } }
-      else { setMWrong(ns.l); recordAnswer(ns.l, "bad"); setTimeout(() => { setMSel({ l: null, r: null }); setMWrong(null); }, 1800); }
+      if (lw && lw.m === ns.r) {
+        const nd = [...mDone, lw];
+        setMDone(nd);
+        setMSel({ l: null, r: null });
+        if (nd.length === q.pairs.length) { setScore(s => s + 1); nd.forEach(w => updateAnswer(w.h, "ok")); }
+      } else {
+        setMWrong(ns.l);
+        updateAnswer(ns.l, "bad");
+        setTimeout(() => { setMSel({ l: null, r: null }); setMWrong(null); }, 1800);
+      }
     }
   };
   return (
@@ -588,11 +666,10 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
           })}
         </div>
       </div>
-      {allDone && <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= TOTAL ? "xem kết quả" : "tiếp theo"}</button>}
+      {allDone && <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= total ? "xem kết quả" : "tiếp theo"}</button>}
     </div>
   );
 }
-
 // ── REVIEW ───────────────────────────────────────────────────
 function Review({ weak, unmarkWeak }) {
   const [mode, setMode]           = useState("menu");
@@ -612,7 +689,12 @@ function Review({ weak, unmarkWeak }) {
     setLoading(true); setMode("reading"); setShowTrans(false); setShowPin(false);
     setUserTrans(""); setFb(null); setShowFb(false); setContent(null);
     const needed = Math.min(type === "dialogue" ? 3 : 4, pool.length);
-    const picked = shuffle(pool).slice(0, needed);
+    const weakPart = shuffle(weak).slice(0, needed);
+    const remaining = needed - weakPart.length;
+    const fillPart = remaining > 0
+      ? shuffle(W.filter(w => !weak.find(x => x.h === w.h))).slice(0, remaining)
+      : [];
+    const picked = [...weakPart, ...fillPart];
     const wl = picked.map(w => w.h).join(", ");
     try {
       const raw = await callAI(`HSK3. Viết ${type === "dialogue" ? "hội thoại ngắn 4 lượt A/B" : "đoạn văn 4 câu"} dùng các từ: ${wl}. Chỉ JSON: {"chinese":"...","pinyin":"...","vietnamese":"...","words_used":["..."]}`, 1500);
@@ -628,7 +710,16 @@ function Review({ weak, unmarkWeak }) {
     if (!userTrans.trim()) return;
     setChecking(true);
     try {
-      const raw = await callAI(`HSK3. Gốc:"${content.chinese}". Chuẩn:"${content.vietnamese}". HS:"${userTrans}". JSON:{"score":"good/ok/bad","comment":"1-2 câu TV"}`);
+      const raw = await callAI(`Bạn là giáo viên tiếng Trung chấm bài dịch cho học sinh Việt Nam học HSK3.
+        Đoạn gốc tiếng Trung: "${content.chinese}"
+        Bản dịch chuẩn tiếng Việt: "${content.vietnamese}"
+        Bản dịch của học sinh: "${userTrans}"
+        Yêu cầu chấm:
+          - Học sinh dịch sang tiếng Việt,
+          - "good": dịch đúng nghĩa, tự nhiên, dễ hiểu
+          - "ok": hiểu đúng ý chính nhưng thiếu chi tiết hoặc hơi cứng
+          - "bad": sai nghĩa hoặc bỏ sót ý quan trọng
+        Chỉ trả JSON: {"score":"good|ok|bad","comment":"1 câu tiếng Việt nhận xét ngắn gọn"}`);
       const p = safeParse(raw);
       setFb(p || { score: "bad", comment: "⚠️ Lỗi phân tích." });
       setShowFb(true);
@@ -665,7 +756,10 @@ function Review({ weak, unmarkWeak }) {
   return (
     <div style={card}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-        {(content.words_used || []).map(w => <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{w}</span>)}
+        {(content.words_used || []).map(w => {
+          const hanzi = w.split(" ")[0];
+          return <span key={w} style={{ ...pill(C.terraLight, C.terra), border: `1px solid ${C.terra}` }}>{hanzi}</span>;
+        })}
       </div>
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 14, marginBottom: 12 }}>
         <p style={{ fontSize: 11, color: C.stone, fontWeight: 500, marginBottom: 8, fontFamily: "Arial, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>{type === "dialogue" ? "hội thoại" : "đoạn văn"}</p>
