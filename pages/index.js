@@ -734,25 +734,27 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: "8px 12px", textAlign: "center", marginBottom: 10 }}>
         <p style={{ color: C.stone, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>ghép chữ Hán với nghĩa đúng · {mDone.length}/{q.pairs.length} cặp</p>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {q.pairs.map(pw => {
-          const done = !!mDone.find(x => x.h === pw.h), selL = mSel.l === pw.h, wrong = mWrong === pw.h;
-          return (
-            <div key={pw.h} style={{ position: "relative" }}>
-              {/* Nút loa góc trên phải, nằm ngoài button */}
-              <div style={{ position: "absolute", top: 2, right: 2, zIndex: 1 }}>
-                <SpeakBtn text={pw.h} />
-            </div>
-            <button onClick={() => { if (!done) pick("l", pw.h); }}
-              style={{ width: "100%", padding: 10, borderRadius: 10, fontSize: 20, fontWeight: 500, minHeight: 52, cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : wrong ? C.error : selL ? C.terra : C.cream}`, background: done ? C.successBg : selL ? C.terraLight : C.ivory, color: done ? C.success : C.terra, textAlign: "center" }}>
-              {pw.h}
-              {wrong && <div style={{ fontSize: 10, color: C.error, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
-              {done  && <div style={{ fontSize: 10, color: C.success, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
-            </button>
-          </div>
-          );
-        })}
-      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+        {/* Cột trái - chữ Hán */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {q.pairs.map(pw => {
+            const done = !!mDone.find(x => x.h === pw.h), selL = mSel.l === pw.h, wrong = mWrong === pw.h;
+            return (
+              <div key={pw.h} style={{ position: "relative" }}>
+                <div style={{ position: "absolute", top: 2, right: 2, zIndex: 1 }}>
+                  <SpeakBtn text={pw.h} />
+                </div>
+                <button onClick={() => { if (!done) pick("l", pw.h); }}
+                  style={{ width: "100%", padding: 10, borderRadius: 10, fontSize: 20, fontWeight: 500, minHeight: 52, cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : wrong ? C.error : selL ? C.terra : C.cream}`, background: done ? C.successBg : selL ? C.terraLight : C.ivory, color: done ? C.success : C.terra, textAlign: "center" }}>
+                  {pw.h}
+                  {wrong && <div style={{ fontSize: 10, color: C.error, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
+                  {done  && <div style={{ fontSize: 10, color: C.success, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        {/* Cột phải - nghĩa */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.rights.map(meaning => {
             const done = !!mDone.find(x => x.m === meaning), selR = mSel.r === meaning;
@@ -768,7 +770,6 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
       {allDone && <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= total ? "xem kết quả" : "tiếp theo"}</button>}
     </div>
   );
-}
 // ── REVIEW ───────────────────────────────────────────────────
 function Review({ weak, unmarkWeak }) {
   const [mode, setMode]           = useState("menu");
