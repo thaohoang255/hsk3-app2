@@ -770,6 +770,7 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
       {allDone && <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= total ? "xem kết quả" : "tiếp theo"}</button>}
     </div>
   );
+}
 // ── REVIEW ───────────────────────────────────────────────────
 function Review({ weak, unmarkWeak }) {
   const [mode, setMode]           = useState("menu");
