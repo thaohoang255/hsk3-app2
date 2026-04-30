@@ -355,7 +355,19 @@ function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordA
     if (!sent.trim()) return;
     setLoading(true);
     try {
-      const raw = await callAI(`Giáo viên tiếng Trung HSK3. Từ: "${w.h}" (${w.p} - ${w.m}). Câu HS: "${sent}". Trả về JSON duy nhất: {"score":"good/bad","comment":"nhận xét ngắn tiếng Việt","example":"câu mẫu dùng từ ${w.h}","ex_pinyin":"pinyin","ex_vi":"nghĩa TV"}`);
+      const raw = await callAI(`Bạn là giáo viên tiếng Trung HSK3.
+      Từ cần dùng: "${w.h}" (${w.p} - ${w.m})
+      Câu học sinh: "${sent}"
+      Chấm theo:
+      - "good": dùng đúng từ, ngữ pháp tự nhiên
+      - "bad": sai từ hoặc ngữ pháp
+      Yêu cầu bắt buộc cho "comment":
+      - Viết bằng tiếng Việt
+      - Nếu nhắc đến từ tiếng Trung thì viết NGUYÊN chữ Hán, ví dụ: 现在, 以前
+      - TUYỆT ĐỐI không mix kiểu "hiện在" hay "trước以前"
+      - "example" phải có từ "${w.h}" hoặc nên sửa lại câu của học sinh
+      - "ex_pinyin" chỉ Latin, không có chữ Hán
+      Chỉ trả JSON: {"score":"good/bad","comment":"...","example":"...","ex_pinyin":"...","ex_vi":"..."}`);
       const p = safeParse(raw);
       if (!p) throw new Error("parse fail");
       setFb(p); setStep(3); setStreak(s => s + 1);
