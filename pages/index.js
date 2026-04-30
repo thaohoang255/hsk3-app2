@@ -486,7 +486,20 @@ function buildQuiz(words, prog) {
   const picked = pool.slice(0, TOTAL);
 
   const result = [];
+  // Thêm đúng 1 câu antonym nếu có từ có pair trong pool
+  const antonymCandidates = picked.filter(w => w.pair);
+  const hasAntonym = antonymCandidates.length > 0;
+  let antonymInserted = false;
+  const antonymPos = Math.floor(Math.random() * TOTAL); // vị trí ngẫu nhiên trong quiz
+
   for (let i = 0; i < TOTAL; i++) {
+    // Chèn câu antonym vào vị trí ngẫu nhiên
+    if (hasAntonym && !antonymInserted && i === antonymPos) {
+      const aw = shuffle(antonymCandidates)[0];
+      result.push({ kind: "antonym", w: aw });
+      antonymInserted = true;
+      continue;
+    }
     const w = picked[i % picked.length];
     const r = Math.random();
     if (r < 0.4)      result.push({ kind: "mcq", w, opts: shuffle([w, ...getWrong(w, words)]), type: Math.random() > 0.5 ? "meaning" : "pinyin" });
@@ -541,6 +554,13 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
     if (ok) setScore(s => s + 1);
     updateAnswer(qs[qi].w.h, ok ? "good" : "bad");
   };
+  const handleAntonym = () => {
+  if (!typed.trim()) return;
+  const ok = typed.trim() === qs[qi].w.pair.h;
+  setTypedRes(ok ? "good" : "bad");
+  if (ok) setScore(s => s + 1);
+  updateAnswer(qs[qi].w.h, ok ? "good" : "bad");
+  };
 
   if (!qs.length) return <p style={{ color: C.stone, fontFamily: "Arial, sans-serif", textAlign: "center" }}>Cần ít nhất 4 từ.</p>;
 
@@ -560,7 +580,7 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
   }
 
   const q = qs[qi];
-  const labels = { mcq: "trắc nghiệm", typing: "gõ pinyin", match: "ghép cặp" };
+  const labels = { mcq: "trắc nghiệm", typing: "gõ pinyin", match: "ghép cặp", antonym: "từ trái nghĩa" };
   return (
     <div style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -593,6 +613,39 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
       )}
 
       {q.kind === "typing" && (
+        {q.kind === "antonym" && (
+  <div>
+    <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12 }}>
+      <p style={{ color: C.stone, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>gõ từ trái nghĩa bằng chữ Hán</p>
+      <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
+    </div>
+    {typedRes && (
+      <div style={{ background: typedRes === "good" ? C.successBg : C.errorBg, border: `1px solid ${typedRes === "good" ? C.success : C.error}`, borderRadius: 8, padding: "10px 12px", marginBottom: 8, fontFamily: "Arial, sans-serif" }}>
+        <p style={{ color: typedRes === "good" ? C.success : C.error, fontWeight: 500, fontSize: 13, margin: "0 0 4px" }}>
+          {typedRes === "good" ? "Đúng rồi! 🎉" : `Chưa đúng`}
+        </p>
+        <p style={{ color: C.nearBlack, fontSize: 18, fontWeight: 500, margin: "0 0 2px" }}>{q.w.pair.h}</p>
+        <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.pair.p}</p>
+        <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.pair.m}</p>
+      </div>
+    )}
+    {!typedRes ? (
+      <div>
+        <input
+          value={typed}
+          onChange={e => setTyped(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") handleAntonym(); }}
+          placeholder="gõ chữ Hán..."
+          style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 20, outline: "none", boxSizing: "border-box", marginBottom: 8, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif", textAlign: "center" }}
+          autoFocus
+        />
+        <button onClick={handleAntonym} disabled={!typed.trim()} style={{ width: "100%", ...btn(typed.trim() ? C.terra : C.sand, typed.trim() ? C.ivory : C.stone), fontFamily: "Arial, sans-serif" }}>kiểm tra</button>
+      </div>
+    ) : (
+      <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= qs.length ? "xem kết quả" : "tiếp theo"}</button>
+    )}
+  </div>
+)}
         <div>
           <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12 }}>
             <p style={{ color: C.stone, fontSize: 12, marginBottom: 4, fontFamily: "Arial, sans-serif" }}>gõ pinyin (không cần dấu thanh)</p>
