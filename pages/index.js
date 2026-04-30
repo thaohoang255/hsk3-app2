@@ -631,20 +631,34 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
       )}
       {q.kind === "antonym" && (
         <div>
-          <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12 }}>
-            <p style={{ color: C.stone, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>gõ từ trái nghĩa bằng chữ Hán</p>
-            <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
-          </div>
-          {typedRes && (
-            <div style={{ background: typedRes === "good" ? C.successBg : C.errorBg, border: `1px solid ${typedRes === "good" ? C.success : C.error}`, borderRadius: 8, padding: "10px 12px", marginBottom: 8, fontFamily: "Arial, sans-serif" }}>
-              <p style={{ color: typedRes === "good" ? C.success : C.error, fontWeight: 500, fontSize: 13, margin: "0 0 4px" }}>
-                {typedRes === "good" ? "Đúng rồi! 🎉" : `Chưa đúng`}
-            </p>
-            <p style={{ color: C.nearBlack, fontSize: 18, fontWeight: 500, margin: "0 0 2px" }}>{q.w.pair.h}</p>
-            <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.pair.p}</p>
-            <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.pair.m}</p>
-          </div>
-        )}
+          {/* Chỉ hiện box câu hỏi khi chưa có kết quả */}
+          {!typedRes && (
+            <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12 }}>
+               <p style={{ color: C.stone, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>gõ từ trái nghĩa bằng chữ Hán</p>
+                <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
+            </div>
+          )}
+         {typedRes && (
+      <div style={{ marginBottom: 8 }}>
+        {/* Info từ đang hỏi */}
+        <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 8, padding: "10px 12px", marginBottom: 8, textAlign: "center" }}>
+          <p style={{ fontSize: 11, color: C.stone, margin: "0 0 4px", fontFamily: "Arial, sans-serif" }}>từ đang hỏi</p>
+          <p style={{ color: C.terra, fontSize: 28, fontWeight: 500, margin: "0 0 2px" }}>{q.w.h}</p>
+          <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.p}</p>
+          <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.m}</p>
+        </div>
+        {/* Kết quả + đáp án */}
+        <div style={{ background: typedRes === "good" ? C.successBg : C.errorBg, border: `1px solid ${typedRes === "good" ? C.success : C.error}`, borderRadius: 8, padding: "10px 12px", fontFamily: "Arial, sans-serif" }}>
+          <p style={{ color: typedRes === "good" ? C.success : C.error, fontWeight: 500, fontSize: 13, margin: "0 0 4px" }}>
+            {typedRes === "good" ? "Đúng rồi! 🎉" : "Chưa đúng"}
+          </p>
+          <p style={{ fontSize: 11, color: typedRes === "good" ? C.success : C.error, margin: "0 0 4px", fontFamily: "Arial, sans-serif" }}>từ trái nghĩa</p>
+          <p style={{ color: C.nearBlack, fontSize: 18, fontWeight: 500, margin: "0 0 2px" }}>{q.w.pair.h}</p>
+          <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.pair.p}</p>
+          <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.pair.m}</p>
+        </div>
+      </div>
+    )}
         {!typedRes ? (
           <div>
             <input
