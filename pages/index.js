@@ -463,19 +463,16 @@ function buildQuiz(words, prog) {
   if (words.length < 4) return [];
   const now = Date.now();
 
-  // Phân loại — không có rest
   const unseen = words.filter(w => !prog[w.h]);
   const weak   = words.filter(w => prog[w.h] && prog[w.h].correct / Math.max(prog[w.h].seen, 1) < 0.6);
   const due    = words.filter(w => prog[w.h] && prog[w.h].due <= now && prog[w.h].correct / Math.max(prog[w.h].seen, 1) >= 0.6);
 
-  // Gộp theo thứ tự ưu tiên, dedup
   const seen = new Set();
   const pool = [];
   for (const w of [...shuffle(unseen), ...shuffle(weak), ...shuffle(due)]) {
     if (!seen.has(w.h)) { seen.add(w.h); pool.push(w); }
   }
 
-  // Nếu không đủ 10 thì fill thêm unseen/weak chưa có
   if (pool.length < TOTAL) {
     for (const w of shuffle(words)) {
       if (!seen.has(w.h)) { seen.add(w.h); pool.push(w); }
@@ -486,14 +483,12 @@ function buildQuiz(words, prog) {
   const picked = pool.slice(0, TOTAL);
 
   const result = [];
-  // Thêm đúng 1 câu antonym nếu có từ có pair trong pool
   const antonymCandidates = picked.filter(w => w.pair);
   const hasAntonym = antonymCandidates.length > 0;
   let antonymInserted = false;
-  const antonymPos = Math.floor(Math.random() * TOTAL); // vị trí ngẫu nhiên trong quiz
+  const antonymPos = Math.floor(Math.random() * TOTAL);
 
   for (let i = 0; i < TOTAL; i++) {
-    // Chèn câu antonym vào vị trí ngẫu nhiên
     if (hasAntonym && !antonymInserted && i === antonymPos) {
       const aw = shuffle(antonymCandidates)[0];
       result.push({ kind: "antonym", w: aw });
@@ -508,6 +503,26 @@ function buildQuiz(words, prog) {
     else { const mp = shuffle([...weak, ...unseen, ...due]).slice(0, 4); result.push({ kind: "match", pairs: mp.length >= 4 ? mp : shuffle(words).slice(0,4), rights: shuffle((mp.length >= 4 ? mp : shuffle(words).slice(0,4)).map(x => x.m)) }); }
   }
   return result;
+}
+
+// Nút loa nhỏ dùng chung
+function SpeakBtn({ text }) {
+  const [playing, setPlaying] = useState(false);
+  const handleSpeak = (e) => {
+    e.stopPropagation();
+    setPlaying(true);
+    speak(text);
+    setTimeout(() => setPlaying(false), 1800);
+  };
+  return (
+    <button
+      onClick={handleSpeak}
+      title="Nghe phát âm"
+      style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: playing ? C.terra : C.warmSilver, padding: "2px 4px", lineHeight: 1, transition: "color 0.2s" }}
+    >
+      🔊
+    </button>
+  );
 }
 
 function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress }) {
@@ -530,7 +545,7 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
     if (qi + 1 >= qs.length) {
       setDone(true);
       setStreak(s => s + 1);
-      saveProgress(prog); // save 1 lần duy nhất khi kết thúc
+      saveProgress(prog);
     } else {
       setQi(i => i + 1);
       resetQ();
@@ -554,12 +569,13 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
     if (ok) setScore(s => s + 1);
     updateAnswer(qs[qi].w.h, ok ? "good" : "bad");
   };
+
   const handleAntonym = () => {
-  if (!typed.trim()) return;
-  const ok = typed.trim() === qs[qi].w.pair.h;
-  setTypedRes(ok ? "good" : "bad");
-  if (ok) setScore(s => s + 1);
-  updateAnswer(qs[qi].w.h, ok ? "good" : "bad");
+    if (!typed.trim()) return;
+    const ok = typed.trim() === qs[qi].w.pair.h;
+    setTypedRes(ok ? "good" : "bad");
+    if (ok) setScore(s => s + 1);
+    updateAnswer(qs[qi].w.h, ok ? "good" : "bad");
   };
 
   if (!qs.length) return <p style={{ color: C.stone, fontFamily: "Arial, sans-serif", textAlign: "center" }}>Cần ít nhất 4 từ.</p>;
@@ -581,6 +597,7 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
 
   const q = qs[qi];
   const labels = { mcq: "trắc nghiệm", typing: "gõ pinyin", match: "ghép cặp", antonym: "từ trái nghĩa" };
+
   return (
     <div style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -593,9 +610,11 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
         <div style={{ background: C.terra, height: 3, borderRadius: 999, width: `${(qi / qs.length) * 100}%` }} />
       </div>
 
+      {/* ── MCQ ── */}
       {q.kind === "mcq" && (
         <div>
-          <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12 }}>
+          <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12, position: "relative" }}>
+            <div style={{ position: "absolute", top: 8, right: 8 }}><SpeakBtn text={q.w.h} /></div>
             <p style={{ color: C.stone, fontSize: 12, marginBottom: 4, fontFamily: "Arial, sans-serif" }}>{q.type === "meaning" ? "nghĩa của từ này là gì?" : "pinyin của từ này là gì?"}</p>
             <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
             <p style={{ color: C.stone, fontSize: 13, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.type === "meaning" ? q.w.p : q.w.m}</p>
@@ -612,9 +631,11 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
         </div>
       )}
 
+      {/* ── TYPING ── */}
       {q.kind === "typing" && (
-                <div>
-          <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12 }}>
+        <div>
+          <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12, position: "relative" }}>
+            <div style={{ position: "absolute", top: 8, right: 8 }}><SpeakBtn text={q.w.h} /></div>
             <p style={{ color: C.stone, fontSize: 12, marginBottom: 4, fontFamily: "Arial, sans-serif" }}>gõ pinyin (không cần dấu thanh)</p>
             <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
             <p style={{ color: C.stone, fontSize: 13, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.m}</p>
@@ -629,54 +650,59 @@ function Quiz({ words, setStreak, prog, recordAnswer, updateAnswer, saveProgress
           ) : <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= qs.length ? "xem kết quả" : "tiếp theo"}</button>}
         </div>
       )}
+
+      {/* ── ANTONYM ── */}
       {q.kind === "antonym" && (
         <div>
-          {/* Chỉ hiện box câu hỏi khi chưa có kết quả */}
           {!typedRes && (
-            <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12 }}>
-               <p style={{ color: C.stone, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>gõ từ trái nghĩa bằng chữ Hán</p>
-                <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
+            <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 16, textAlign: "center", marginBottom: 12, position: "relative" }}>
+              <div style={{ position: "absolute", top: 8, right: 8 }}><SpeakBtn text={q.w.h} /></div>
+              <p style={{ color: C.stone, fontSize: 12, marginBottom: 8, fontFamily: "Arial, sans-serif" }}>gõ từ trái nghĩa bằng chữ Hán</p>
+              <p style={{ fontSize: 56, fontWeight: 500, color: C.terra, margin: "4px 0", lineHeight: 1 }}>{q.w.h}</p>
             </div>
           )}
-         {typedRes && (
-      <div style={{ marginBottom: 8 }}>
-        {/* Info từ đang hỏi */}
-        <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 8, padding: "10px 12px", marginBottom: 8, textAlign: "center" }}>
-          <p style={{ fontSize: 11, color: C.stone, margin: "0 0 4px", fontFamily: "Arial, sans-serif" }}>từ đang hỏi</p>
-          <p style={{ color: C.terra, fontSize: 28, fontWeight: 500, margin: "0 0 2px" }}>{q.w.h}</p>
-          <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.p}</p>
-          <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.m}</p>
+          {typedRes && (
+            <div style={{ marginBottom: 8 }}>
+              {/* Info từ đang hỏi */}
+              <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 8, padding: "10px 12px", marginBottom: 8, textAlign: "center", position: "relative" }}>
+                <div style={{ position: "absolute", top: 8, right: 8 }}><SpeakBtn text={q.w.h} /></div>
+                <p style={{ fontSize: 11, color: C.stone, margin: "0 0 4px", fontFamily: "Arial, sans-serif" }}>từ đang hỏi</p>
+                <p style={{ color: C.terra, fontSize: 28, fontWeight: 500, margin: "0 0 2px" }}>{q.w.h}</p>
+                <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.p}</p>
+                <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.m}</p>
+              </div>
+              {/* Kết quả + đáp án */}
+              <div style={{ background: typedRes === "good" ? C.successBg : C.errorBg, border: `1px solid ${typedRes === "good" ? C.success : C.error}`, borderRadius: 8, padding: "10px 12px", position: "relative" }}>
+                <div style={{ position: "absolute", top: 8, right: 8 }}><SpeakBtn text={q.w.pair.h} /></div>
+                <p style={{ color: typedRes === "good" ? C.success : C.error, fontWeight: 500, fontSize: 13, margin: "0 0 4px", fontFamily: "Arial, sans-serif" }}>
+                  {typedRes === "good" ? "Đúng rồi! 🎉" : "Chưa đúng"}
+                </p>
+                <p style={{ fontSize: 11, color: typedRes === "good" ? C.success : C.error, margin: "0 0 4px", fontFamily: "Arial, sans-serif" }}>từ trái nghĩa</p>
+                <p style={{ color: C.nearBlack, fontSize: 18, fontWeight: 500, margin: "0 0 2px" }}>{q.w.pair.h}</p>
+                <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.pair.p}</p>
+                <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.pair.m}</p>
+              </div>
+            </div>
+          )}
+          {!typedRes ? (
+            <div>
+              <input
+                value={typed}
+                onChange={e => setTyped(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleAntonym(); }}
+                placeholder="gõ chữ Hán..."
+                style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 20, outline: "none", boxSizing: "border-box", marginBottom: 8, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif", textAlign: "center" }}
+                autoFocus
+              />
+              <button onClick={handleAntonym} disabled={!typed.trim()} style={{ width: "100%", ...btn(typed.trim() ? C.terra : C.sand, typed.trim() ? C.ivory : C.stone), fontFamily: "Arial, sans-serif" }}>kiểm tra</button>
+            </div>
+          ) : (
+            <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= qs.length ? "xem kết quả" : "tiếp theo"}</button>
+          )}
         </div>
-        {/* Kết quả + đáp án */}
-        <div style={{ background: typedRes === "good" ? C.successBg : C.errorBg, border: `1px solid ${typedRes === "good" ? C.success : C.error}`, borderRadius: 8, padding: "10px 12px", fontFamily: "Arial, sans-serif" }}>
-          <p style={{ color: typedRes === "good" ? C.success : C.error, fontWeight: 500, fontSize: 13, margin: "0 0 4px" }}>
-            {typedRes === "good" ? "Đúng rồi! 🎉" : "Chưa đúng"}
-          </p>
-          <p style={{ fontSize: 11, color: typedRes === "good" ? C.success : C.error, margin: "0 0 4px", fontFamily: "Arial, sans-serif" }}>từ trái nghĩa</p>
-          <p style={{ color: C.nearBlack, fontSize: 18, fontWeight: 500, margin: "0 0 2px" }}>{q.w.pair.h}</p>
-          <p style={{ color: C.stone, fontSize: 12, margin: "0 0 2px", fontFamily: "Arial, sans-serif" }}>{q.w.pair.p}</p>
-          <p style={{ color: C.charcoal, fontSize: 12, margin: 0, fontFamily: "Arial, sans-serif" }}>{q.w.pair.m}</p>
-        </div>
-      </div>
-    )}
-        {!typedRes ? (
-          <div>
-            <input
-              value={typed}
-              onChange={e => setTyped(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleAntonym(); }}
-              placeholder="gõ chữ Hán..."
-              style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 20, outline: "none", boxSizing: "border-box", marginBottom: 8, background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif", textAlign: "center" }}
-              autoFocus
-            />
-            <button onClick={handleAntonym} disabled={!typed.trim()} style={{ width: "100%", ...btn(typed.trim() ? C.terra : C.sand, typed.trim() ? C.ivory : C.stone), fontFamily: "Arial, sans-serif" }}>kiểm tra</button>
-          </div>
-      ) : (
-          <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>{qi + 1 >= qs.length ? "xem kết quả" : "tiếp theo"}</button>
       )}
-    </div>
-  )}
 
+      {/* ── MATCH ── */}
       {q.kind === "match" && <MatchQ q={q} mDone={mDone} mSel={mSel} mWrong={mWrong} setMSel={setMSel} setMDone={setMDone} setMWrong={setMWrong} setScore={setScore} updateAnswer={updateAnswer} next={next} qi={qi} total={qs.length} />}
     </div>
   );
@@ -702,6 +728,7 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
       }
     }
   };
+
   return (
     <div>
       <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: "8px 12px", textAlign: "center", marginBottom: 10 }}>
@@ -711,19 +738,29 @@ function MatchQ({ q, mDone, mSel, mWrong, setMSel, setMDone, setMWrong, setScore
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.pairs.map(pw => {
             const done = !!mDone.find(x => x.h === pw.h), selL = mSel.l === pw.h, wrong = mWrong === pw.h;
-            return <button key={pw.h} onClick={() => { if (!done) pick("l", pw.h); }} style={{ padding: 10, borderRadius: 10, fontSize: 20, fontWeight: 500, minHeight: 52, cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : wrong ? C.error : selL ? C.terra : C.cream}`, background: done ? C.successBg : selL ? C.terraLight : C.ivory, color: done ? C.success : C.terra, textAlign: "center" }}>
-              {pw.h}
-              {wrong && <div style={{ fontSize: 10, color: C.error, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
-              {done  && <div style={{ fontSize: 10, color: C.success, fontWeight: 400, marginTop: 2, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
-            </button>;
+            return (
+              <button key={pw.h} onClick={() => { if (!done) pick("l", pw.h); }}
+                style={{ padding: 10, borderRadius: 10, fontSize: 20, fontWeight: 500, minHeight: 52, cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : wrong ? C.error : selL ? C.terra : C.cream}`, background: done ? C.successBg : selL ? C.terraLight : C.ivory, color: done ? C.success : C.terra, textAlign: "center", position: "relative" }}>
+                {pw.h}
+                {/* Nút loa nhỏ dưới chữ Hán */}
+                <div style={{ fontSize: 10, marginTop: 2 }} onClick={e => e.stopPropagation()}>
+                  <SpeakBtn text={pw.h} />
+                </div>
+                {wrong && <div style={{ fontSize: 10, color: C.error, fontWeight: 400, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
+                {done  && <div style={{ fontSize: 10, color: C.success, fontWeight: 400, fontFamily: "Arial, sans-serif" }}>{pw.p}</div>}
+              </button>
+            );
           })}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.rights.map(meaning => {
             const done = !!mDone.find(x => x.m === meaning), selR = mSel.r === meaning;
-            return <button key={meaning} onClick={() => { if (!done) pick("r", meaning); }} style={{ padding: 8, borderRadius: 10, fontSize: 11, minHeight: 52, textAlign: "center", lineHeight: "1.4", cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : selR ? C.terra : C.cream}`, background: done ? C.successBg : selR ? C.terraLight : C.ivory, color: done ? C.success : C.charcoal, fontFamily: "Arial, sans-serif" }}>
-              {meaning}
-            </button>;
+            return (
+              <button key={meaning} onClick={() => { if (!done) pick("r", meaning); }}
+                style={{ padding: 8, borderRadius: 10, fontSize: 11, minHeight: 52, textAlign: "center", lineHeight: "1.4", cursor: done ? "default" : "pointer", border: `1px solid ${done ? C.success : selR ? C.terra : C.cream}`, background: done ? C.successBg : selR ? C.terraLight : C.ivory, color: done ? C.success : C.charcoal, fontFamily: "Arial, sans-serif" }}>
+                {meaning}
+              </button>
+            );
           })}
         </div>
       </div>
