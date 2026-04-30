@@ -341,15 +341,14 @@ function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordA
   const [fb, setFb]             = useState(null);
   const [loading, setLoading]   = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [pron, setPron]         = useState(null);
 
   useEffect(() => {
     setWord(pickWord(words, prog));
-    setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null); setPron(null);
+    setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null);
   }, [words]);
 
   const w = word || words[0];
-  const next = () => { setWord(pickWord(words, prog)); setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null); setPron(null); setSpeaking(false); };
+  const next = () => { setWord(pickWord(words, prog)); setStep(0); setShowP(false); setShowM(false); setSent(""); setFb(null); setSpeaking(false); };
   const doSpeak = () => { setSpeaking(true); speak(w.h); setTimeout(() => setSpeaking(false), 1800); };
 
   const check = async () => {
@@ -371,7 +370,6 @@ function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordA
 
   if (!w) return null;
   const isWeak = !!weak.find(x => x.h === w.h);
-  const tone   = getTone(w.p || "");
   const pl     = getProgLabel(prog, w.h);
 
   return (
@@ -384,31 +382,17 @@ function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordA
             {prog[w.h] && <span style={{ ...pill(C.sand, C.stone), fontFamily: "Arial, sans-serif" }}>{prog[w.h].correct}/{prog[w.h].seen} đúng</span>}
           </div>
           <div style={{ fontSize: 80, fontWeight: 500, color: C.terra, lineHeight: 1, marginBottom: 16 }}>{w.h}</div>
-          <div style={{ marginBottom: 16 }}>
-            {showP ? <p style={{ fontSize: 22, color: C.olive, margin: "0 0 6px", fontFamily: "Arial, sans-serif" }}>{w.p}</p>
+          <div style={{ marginBottom: 14 }}>
+            {showP
+              ? <p style={{ fontSize: 22, color: C.olive, margin: "0 0 6px", fontFamily: "Arial, sans-serif" }}>{w.p}</p>
               : <button onClick={() => setShowP(true)} style={{ ...btn(C.sand, C.charcoal, C.cream), marginBottom: 6, fontFamily: "Arial, sans-serif" }}>xem pinyin</button>}
-            {showM ? <p style={{ fontSize: 15, color: C.charcoal, margin: 0, fontFamily: "Arial, sans-serif" }}>📖 {w.m}</p>
+            {showM
+              ? <p style={{ fontSize: 15, color: C.charcoal, margin: 0, fontFamily: "Arial, sans-serif" }}>📖 {w.m}</p>
               : <button onClick={() => setShowM(true)} style={{ ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>xem nghĩa</button>}
           </div>
-          <div style={{ background: C.parchment, border: `1px solid ${C.cream}`, borderRadius: 10, padding: 12, marginBottom: 14, textAlign: "left" }}>
-            <p style={{ fontSize: 11, color: C.stone, margin: "0 0 8px", fontFamily: "Arial, sans-serif", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>Luyện phát âm</p>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999, fontSize: 12, marginBottom: 10, background: tone.bg, color: tone.fg, fontFamily: "Arial, sans-serif" }}>
-              <span style={{ fontSize: 16, fontWeight: 500 }}>{tone.mark}</span>{tone.label}
-            </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-              <button onClick={doSpeak} disabled={speaking} style={{ ...btn(speaking ? C.cream : C.terra, speaking ? C.stone : C.ivory), fontFamily: "Arial, sans-serif" }}>
-                {speaking ? "đang phát..." : "nghe phát âm"}
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => { setPron("good"); recordAnswer(w.h, "good"); }} style={{ flex: 1, ...btn(pron === "good" ? C.successBg : C.ivory, pron === "good" ? C.success : C.charcoal, pron === "good" ? C.success : C.cream), fontFamily: "Arial, sans-serif" }}>
-                {pron === "good" ? "✓ Đúng rồi!" : "Đọc đúng"}
-              </button>
-              <button onClick={() => { setPron("bad"); markWeak(w, "Phát âm chưa chuẩn"); recordAnswer(w.h, "bad"); }} style={{ flex: 1, ...btn(pron === "bad" ? C.errorBg : C.ivory, pron === "bad" ? C.error : C.charcoal, pron === "bad" ? C.error : C.cream), fontFamily: "Arial, sans-serif" }}>
-                {pron === "bad" ? "✓ Đã lưu" : "Chưa chuẩn"}
-              </button>
-            </div>
-          </div>
+          <button onClick={doSpeak} disabled={speaking} style={{ ...btn(speaking ? C.cream : C.sand, speaking ? C.stone : C.charcoal, C.cream), marginBottom: 14, fontFamily: "Arial, sans-serif" }}>
+            {speaking ? "đang phát..." : "🔊 nghe phát âm"}
+          </button>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={next} style={{ flex: 1, ...btn(C.sand, C.charcoal, C.cream), fontFamily: "Arial, sans-serif" }}>bỏ qua</button>
             <button onClick={() => setStep(2)} style={{ flex: 2, ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>đặt câu</button>
@@ -421,7 +405,7 @@ function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordA
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             <div style={{ fontSize: 60, fontWeight: 500, color: C.terra }}>{w.h}</div>
             <p style={{ color: C.stone, fontSize: 13, margin: "4px 0", fontFamily: "Arial, sans-serif" }}>{w.p} · {w.m}</p>
-            <button onClick={doSpeak} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 12, fontFamily: "Arial, sans-serif" }}>{speaking ? "đang phát..." : "nghe lại"}</button>
+            <button onClick={doSpeak} style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 12, fontFamily: "Arial, sans-serif" }}>{speaking ? "đang phát..." : "🔊 nghe lại"}</button>
           </div>
           <textarea value={sent} onChange={e => setSent(e.target.value)} placeholder={`Đặt câu có "${w.h}"...`}
             style={{ width: "100%", border: `1px solid ${C.sand}`, borderRadius: 8, padding: "10px 12px", fontSize: 15, marginBottom: 12, outline: "none", resize: "none", boxSizing: "border-box", background: C.ivory, color: C.nearBlack, fontFamily: "Georgia, serif" }} rows={3} />
@@ -452,7 +436,8 @@ function Flashcard({ words, weak, markWeak, unmarkWeak, setStreak, prog, recordA
             )}
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            {!isWeak ? <button onClick={() => markWeak(w)} style={{ flex: 1, ...btn(C.warningBg, C.warning, C.warning), fontSize: 12, fontFamily: "Arial, sans-serif" }}>đánh dấu ôn lại</button>
+            {!isWeak
+              ? <button onClick={() => markWeak(w)} style={{ flex: 1, ...btn(C.warningBg, C.warning, C.warning), fontSize: 12, fontFamily: "Arial, sans-serif" }}>đánh dấu ôn lại</button>
               : <button onClick={() => unmarkWeak(w.h)} style={{ flex: 1, ...btn(C.sand, C.stone, C.cream), fontSize: 12, fontFamily: "Arial, sans-serif" }}>bỏ đánh dấu</button>}
           </div>
           <button onClick={next} style={{ width: "100%", ...btn(C.terra, C.ivory), fontFamily: "Arial, sans-serif" }}>từ tiếp theo</button>
