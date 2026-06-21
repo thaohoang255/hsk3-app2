@@ -15,7 +15,7 @@ const supabase = createClient(
 );
 
 // ─── DANH SÁCH TỪ ────────────────────────────────────────────
-import { WORDS } from 'hsk3-app2/data/wordsnoti';
+import { WORDS } from '../../data/wordsnoti';
 // ─── HANDLER ─────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
