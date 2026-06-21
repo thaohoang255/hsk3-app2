@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 // Kết nối Supabase với quyền admin (service role)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY  // ← khác với anon key!
+  process.env.SUPABASE_SERVICE_KEY // ← khác với anon key!
 );
 
 export default async function handler(req, res) {
