@@ -15,7 +15,7 @@ const supabase = createClient(
 );
 
 // ─── DANH SÁCH TỪ ────────────────────────────────────────────
-import { WORDS } from '../../data/wordsnoti';
+import { WORDS } from '../../../data/wordsnoti';
 // ─── HANDLER ─────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
