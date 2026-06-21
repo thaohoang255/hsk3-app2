@@ -33,8 +33,8 @@ export default async function handler(req, res) {
 
   // Format đúng theo layout đã chốt
   const payload = JSON.stringify({
-    title: word.hanzi,
-    body: `${word.pinyin} · ${word.meaning}\n💬 ${word.example}\n${word.example_pinyin}\n${word.example_meaning}`,
+    title: `${word.hanzi} · ${word.pinyin} · ${word.meaning}`,
+    body: `💬 ${word.example}\n${word.example_pinyin}\n${word.example_meaning}`,
     url: '/'
   });
 
