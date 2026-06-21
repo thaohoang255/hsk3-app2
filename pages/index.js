@@ -54,6 +54,14 @@ const safeParse = text => {
   } catch { return null; }
 };
 
+// Convert VAPID key sang format trình duyệt hiểu được
+const urlBase64ToUint8Array = base64String => {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+};
+
 // ── SPACED REPETITION (SM-2) ─────────────────────────────────
 const DAY = 86400000;
 const defaultProg = { ease: 2.3, interval: 0, due: 0, streak: 0, seen: 0, correct: 0 };
@@ -186,6 +194,48 @@ export default function App() {
   const [syncing, setSyncing]   = useState(false);
   const [progLoaded, setProgLoaded] = useState(false);
 
+  const [notiStatus, setNotiStatus] = useState("idle"); // idle | loading | on | denied
+
+  const enableNotifications = async () => {
+    // Kiểm tra trình duyệt có hỗ trợ không
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      alert("Trình duyệt này không hỗ trợ push notification.");
+      return;
+    }
+    setNotiStatus("loading");
+    try {
+      // Đăng ký service worker
+      const reg = await navigator.serviceWorker.register("/sw.js");
+
+      // Xin quyền hiện notification
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setNotiStatus("denied");
+        return;
+      }
+
+      // Tạo subscription với VAPID key
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        ),
+      });
+
+      // Gửi subscription lên server để lưu vào Supabase
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub, userId: user.id }),
+      });
+
+      setNotiStatus("on");
+    } catch (err) {
+      console.error("Push error:", err);
+      setNotiStatus("idle");
+    }
+  };
+
   // Auth listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -276,6 +326,23 @@ export default function App() {
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <span style={{ ...pill(C.warningBg, C.warning), fontFamily: "Arial, sans-serif" }}>🔥 {streak}</span>
               <span style={{ ...pill(C.errorBg, C.error), fontFamily: "Arial, sans-serif" }}>⚑ {weak.length}</span>
+              {"serviceWorker" in navigator && (
+                <button
+                  onClick={enableNotifications}
+                  disabled={notiStatus === "loading" || notiStatus === "on"}
+                  title={notiStatus === "on" ? "Thông báo đã bật" : notiStatus === "denied" ? "Bị chặn — vào Settings để bật lại" : "Bật thông báo từ vựng"}
+                  style={{
+                    ...btn(
+                      notiStatus === "on" ? C.successBg : C.sand,
+                      notiStatus === "on" ? C.success : notiStatus === "denied" ? C.error : C.charcoal,
+                      C.cream
+                    ),
+                    fontSize: 11, padding: "4px 8px", fontFamily: "Arial, sans-serif"
+                  }}
+                >
+                  {notiStatus === "loading" ? "..." : notiStatus === "on" ? "🔔 Đã bật" : notiStatus === "denied" ? "🔕 Bị chặn" : "🔔 Thông báo"}
+                </button>
+              )}    
               <button onClick={handleLogout} title="Đăng xuất" style={{ ...btn(C.sand, C.charcoal, C.cream), fontSize: 11, padding: "4px 8px", fontFamily: "Arial, sans-serif" }}>↩</button>
             </div>
           </div>
